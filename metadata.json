@@ -1,0 +1,6 @@
+{
+  "name": "Customer Support Assistant",
+  "description": "Intelligent real-time customer support coaching, simulation, RAG knowledge retrieval, risk monitoring, and post-session performance analytics.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
