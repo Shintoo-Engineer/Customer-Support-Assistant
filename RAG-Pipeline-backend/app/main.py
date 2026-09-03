@@ -6,6 +6,7 @@ from app.api.rag import router as rag_router
 from app.api.document_management import router as document_management_router
 from app.api.chat import router as chat_router
 from app.api.support import router as support_router
+from app.api.simulator import router as simulator_router
 
 
 app = FastAPI(
@@ -24,6 +25,7 @@ app.include_router(rag_router)
 app.include_router(document_management_router)
 app.include_router(chat_router)
 app.include_router(support_router)
+app.include_router(simulator_router)
 
 
 @app.get("/")
