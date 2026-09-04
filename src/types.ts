@@ -1,7 +1,56 @@
 export type InteractionMode = 'simulator' | 'manual' | 'replay';
-export type UserRole = 'agent' | 'trainer' | 'admin';
+export type UserRole = 'admin' | 'trainer' | 'employee';
+export type PolicyAccessLevel = 'PUBLIC' | 'EMPLOYEE' | 'TRAINER' | 'ADMIN';
 export type CoachingLevel = 'beginner' | 'intermediate' | 'advanced' | 'assessment';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard' | 'expert';
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  lastLogin?: string;
+}
+
+export interface PolicyDocument {
+  id: string;
+  filename: string;
+  originalName: string;
+  category: 'HR' | 'IT' | 'Finance' | 'General' | 'Training' | 'Security' | 'Returns' | 'Refunds' | 'Shipping' | 'Warranty' | 'Privacy' | 'Billing' | 'Customer Service';
+  accessLevel: PolicyAccessLevel;
+  mimeType: string;
+  size: number;
+  uploadedBy: string;
+  uploadedAt: string;
+  status: 'indexed' | 'processing' | 'failed' | 'inactive';
+  version: number;
+  isActive: boolean;
+  chunkCount: number;
+  summary?: string;
+  extractedTextSnippet?: string;
+  processingError?: string;
+}
+
+export interface PolicyStats {
+  total: number;
+  active: number;
+  processing: number;
+  failed: number;
+}
+
+export interface PolicyChunk {
+  id: string;
+  documentId: string;
+  documentTitle: string;
+  category: string;
+  accessLevel: PolicyAccessLevel;
+  chunkText: string;
+  chunkIndex: number;
+  sectionTitle?: string;
+  pageNumber?: number;
+}
 
 export type SentimentType = 'positive' | 'neutral' | 'negative' | 'very_negative';
 export type EmotionType = 'Frustration' | 'Anger' | 'Confusion' | 'Anxiety' | 'Satisfaction' | 'Disappointment' | 'Urgency' | 'Relief';
@@ -248,9 +297,12 @@ export interface AuditLogEntry {
   id: string;
   timestamp: string;
   userName: string;
+  userEmail?: string;
+  userRole?: string;
   action: string;
-  category: 'auth' | 'session' | 'knowledge' | 'scenario' | 'report' | 'system';
+  category: 'auth' | 'session' | 'knowledge' | 'scenario' | 'report' | 'system' | 'policy' | 'user';
   details: string;
+  resource?: string;
 }
 
 export interface TrainingPlanWeek {

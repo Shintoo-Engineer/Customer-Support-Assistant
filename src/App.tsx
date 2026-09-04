@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Sidebar, ActiveTab } from './components/Sidebar';
-import { DashboardView } from './components/DashboardView';
 import { LiveConsoleView } from './components/LiveConsole/LiveConsoleView';
 import { ScenariosView } from './components/ScenariosView';
 import { KnowledgeBaseView } from './components/KnowledgeBaseView';
@@ -22,9 +21,18 @@ import { TeamAnalyticsView } from './components/TeamAnalyticsView';
 import { AdminAuditView } from './components/AdminAuditView';
 import { SessionComparisonModal } from './components/SessionComparisonModal';
 
+import { LoginView } from './components/LoginView';
+import { UserManagementView } from './components/UserManagementView';
+import { PolicyManagementView } from './components/PolicyManagementView';
+import { AiAssistantView } from './components/AiAssistantView';
+import { AdminDashboardView } from './components/AdminDashboardView';
+import { TrainerDashboardView } from './components/TrainerDashboardView';
+import { EmployeeDashboardView } from './components/EmployeeDashboardView';
+
 import {
   InteractionMode,
   UserRole,
+  UserAccount,
   CoachingLevel,
   Scenario,
   ChatMessage,
@@ -45,18 +53,40 @@ import {
   analyzeTurnApi,
   simulateCustomerTurnApi,
   generateScenarioApi,
-  generateReportApi
+  generateReportApi,
+  fetchCurrentUserApi,
+  logoutApi
 } from './services/api';
 
 export default function App() {
+  // Authentication & Current User State
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   // Global Navigation & Session State
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [currentMode, setCurrentMode] = useState<InteractionMode>('simulator');
-  const [userRole, setUserRole] = useState<UserRole>('agent');
+  const [userRole, setUserRole] = useState<UserRole>('employee');
   const [coachingLevel, setCoachingLevel] = useState<CoachingLevel>('beginner');
   const [piiMaskingEnabled, setPiiMaskingEnabled] = useState(true);
   const [activeLanguage, setActiveLanguage] = useState('English');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    fetchCurrentUserApi().then((user) => {
+      if (user) {
+        setCurrentUser(user);
+        setUserRole(user.role);
+      }
+      setIsAuthLoading(false);
+    }).catch(() => setIsAuthLoading(false));
+  }, []);
+
+  const handleLogout = async () => {
+    await logoutApi();
+    setCurrentUser(null);
+    setActiveTab('dashboard');
+  };
 
   // Datasets
   const [scenarios, setScenarios] = useState<Scenario[]>(INITIAL_SCENARIOS);
@@ -257,6 +287,42 @@ export default function App() {
       knowledgeDocs
     });
   };
+  // Tab authorization check helper
+  const isTabAuthorized = (role: UserRole, tab: ActiveTab): boolean => {
+    if (role === 'admin') return true;
+    if (role === 'trainer') {
+      return !['user_management', 'policy_management', 'admin_audit'].includes(tab);
+    }
+    if (role === 'employee') {
+      return !['user_management', 'policy_management', 'team_analytics', 'admin_audit'].includes(tab);
+    }
+    return false;
+  };
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600 animate-pulse mx-auto flex items-center justify-center font-bold text-lg">
+            CSA
+          </div>
+          <p className="text-xs text-slate-400">Loading system session & role permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <LoginView
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          setUserRole(user.role);
+          setActiveTab('dashboard');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif]">
@@ -264,12 +330,8 @@ export default function App() {
       {/* Top Application Header */}
       <Navbar
         currentMode={currentMode}
-        onSelectMode={(mode) => {
-          setCurrentMode(mode);
-          if (mode === 'replay') setActiveTab('replay');
-          else if (mode === 'simulator') setActiveTab('live_console');
-        }}
-        userRole={userRole}
+        onSelectMode={setCurrentMode}
+        userRole={currentUser.role}
         onChangeRole={setUserRole}
         coachingLevel={coachingLevel}
         onChangeCoachingLevel={setCoachingLevel}
@@ -281,12 +343,14 @@ export default function App() {
         onOpenQuickManual={() => setIsManualModalOpen(true)}
         isMobileMenuOpen={isMobileMenuOpen}
         onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
-      {/* Main Body with Sidebar + Active View */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* Main Workspace Layout (Sidebar + Stage) */}
+      <div className="flex-1 flex overflow-hidden max-w-7xl w-full mx-auto px-0 sm:px-4 lg:px-8 py-0 sm:py-4 gap-4">
         
-        {/* Left Navigation Sidebar */}
+        {/* Left Vertical Navigation Sidebar */}
         <Sidebar
           activeTab={activeTab}
           onSelectTab={(tab) => {
@@ -297,7 +361,7 @@ export default function App() {
             }
             setIsMobileMenuOpen(false);
           }}
-          userRole={userRole}
+          userRole={currentUser.role}
           activeScenarioTitle={activeScenario?.title}
           hasActiveSession={hasActiveSession}
           isMobileOpen={isMobileMenuOpen}
@@ -305,113 +369,132 @@ export default function App() {
         />
 
         {/* Center Main Stage Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-950/90">
-          {activeTab === 'dashboard' && (
-            <DashboardView
-              userProfile={userProfile}
-              scenarios={scenarios}
-              onStartScenario={handleStartScenario}
-              onViewReport={(session) => {
-                setActiveReportSession(session);
-                setActiveTab('reports');
-              }}
-              onOpenQuickManual={() => setIsManualModalOpen(true)}
-              onOpenReplayMode={() => setActiveTab('replay')}
-              onOpenCompareSessions={(s1, s2) => setComparisonPair({ s1, s2 })}
-            />
-          )}
+        <main className="flex-1 overflow-y-auto bg-slate-950/90 rounded-2xl">
+          {!isTabAuthorized(currentUser.role, activeTab) ? (
+            <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-2xl max-w-md mx-auto my-12 space-y-4 shadow-2xl">
+              <div className="w-16 h-16 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20 font-bold text-xl">
+                403
+              </div>
+              <h2 className="text-xl font-bold text-white">Access Forbidden</h2>
+              <p className="text-xs text-slate-400">
+                Your account role (<b>{currentUser.role.toUpperCase()}</b>) does not have permission to view this section.
+              </p>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-500 transition"
+              >
+                Return to Role Dashboard
+              </button>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'dashboard' && (
+                currentUser.role === 'admin' ? (
+                  <AdminDashboardView user={currentUser} />
+                ) : currentUser.role === 'trainer' ? (
+                  <TrainerDashboardView
+                    user={currentUser}
+                    onOpenLiveConsole={() => setActiveTab('live_console')}
+                    onOpenScenarios={() => setActiveTab('scenarios')}
+                  />
+                ) : (
+                  <EmployeeDashboardView
+                    user={currentUser}
+                    onOpenLiveConsole={() => setActiveTab('live_console')}
+                  />
+                )
+              )}
 
-          {activeTab === 'live_console' && (
-            <LiveConsoleView
-              scenario={activeScenario}
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isSimulatingCustomer={isSimulatingCustomer}
-              analysis={currentAnalysis}
-              isAnalyzing={isAnalyzing}
-              coachingLevel={coachingLevel}
-              onFinishSession={handleFinishSession}
-              onRestartSession={() => handleStartScenario(activeScenario)}
-              onSelectAnotherScenario={() => setActiveTab('scenarios')}
-              piiMaskingEnabled={piiMaskingEnabled}
-              onTriggerAiImprove={handleTriggerAiImprove}
-              isImprovingInput={isImprovingInput}
-              inputText={inputText}
-              setInputText={setInputText}
-              onOpenFullKb={(kbId) => {
-                setActiveTab('knowledge_base');
-              }}
-              knowledgeDocs={knowledgeDocs}
-            />
-          )}
+              {activeTab === 'user_management' && <UserManagementView />}
 
-          {activeTab === 'scenarios' && (
-            <ScenariosView
-              scenarios={scenarios}
-              onStartScenario={handleStartScenario}
-              onAddNewScenario={(newScen) => {
-                setScenarios(prev => [newScen, ...prev]);
-                handleStartScenario(newScen);
-              }}
-              userRole={userRole}
-              onGenerateAiScenario={handleGenerateAiScenario}
-            />
-          )}
+              {activeTab === 'policy_management' && <PolicyManagementView />}
 
-          {activeTab === 'knowledge_base' && (
-            <KnowledgeBaseView
-              documents={knowledgeDocs}
-              onAddDocument={(doc) => setKnowledgeDocs(prev => [doc, ...prev])}
-              userRole={userRole}
-            />
-          )}
+              {activeTab === 'ai_assistant' && (
+                <AiAssistantView userRole={currentUser.role} userName={currentUser.name} />
+              )}
 
-          {activeTab === 'replay' && (
-            <ReplayModeView />
-          )}
+              {activeTab === 'live_console' && (
+                <LiveConsoleView
+                  scenario={activeScenario}
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isSimulatingCustomer={isSimulatingCustomer}
+                  analysis={currentAnalysis}
+                  isAnalyzing={isAnalyzing}
+                  coachingLevel={coachingLevel}
+                  onFinishSession={handleFinishSession}
+                  onRestartSession={() => handleStartScenario(activeScenario)}
+                  onSelectAnotherScenario={() => setActiveTab('scenarios')}
+                  piiMaskingEnabled={piiMaskingEnabled}
+                  onTriggerAiImprove={handleTriggerAiImprove}
+                  isImprovingInput={isImprovingInput}
+                  inputText={inputText}
+                  setInputText={setInputText}
+                  onOpenFullKb={() => setActiveTab('ai_assistant')}
+                  knowledgeDocs={knowledgeDocs}
+                />
+              )}
 
-          {activeTab === 'reports' && activeReportSession && (
-            <PerformanceReportView
-              sessionRecord={activeReportSession}
-              scenario={scenarios.find(s => s.id === activeReportSession.scenarioId) || activeScenario}
-              onPracticeAgain={() => handleStartScenario(activeScenario)}
-              onGoToDashboard={() => setActiveTab('dashboard')}
-            />
-          )}
+              {activeTab === 'scenarios' && (
+                <ScenariosView
+                  scenarios={scenarios}
+                  onStartScenario={handleStartScenario}
+                  onAddNewScenario={(newScen) => {
+                    setScenarios(prev => [newScen, ...prev]);
+                    handleStartScenario(newScen);
+                  }}
+                  userRole={currentUser.role}
+                  onGenerateAiScenario={handleGenerateAiScenario}
+                />
+              )}
 
-          {activeTab === 'reports' && !activeReportSession && userProfile.recentSessions.length > 0 && (
-            <PerformanceReportView
-              sessionRecord={userProfile.recentSessions[0]}
-              scenario={scenarios.find(s => s.id === userProfile.recentSessions[0].scenarioId) || activeScenario}
-              onPracticeAgain={() => handleStartScenario(activeScenario)}
-              onGoToDashboard={() => setActiveTab('dashboard')}
-            />
-          )}
+              {activeTab === 'knowledge_base' && (
+                currentUser.role === 'admin' ? (
+                  <PolicyManagementView />
+                ) : (
+                  <AiAssistantView userRole={currentUser.role} userName={currentUser.name} />
+                )
+              )}
 
-          {activeTab === 'training_plans' && (
-            <TrainingPlansView
-              userProfile={userProfile}
-              scenarios={scenarios}
-              onStartScenario={handleStartScenario}
-            />
-          )}
+              {activeTab === 'replay' && <ReplayModeView />}
 
-          {activeTab === 'leaderboard' && (
-            <LeaderboardView userProfile={userProfile} />
-          )}
+              {activeTab === 'reports' && activeReportSession && (
+                <PerformanceReportView
+                  sessionRecord={activeReportSession}
+                  scenario={scenarios.find(s => s.id === activeReportSession.scenarioId) || activeScenario}
+                  onPracticeAgain={() => handleStartScenario(activeScenario)}
+                  onGoToDashboard={() => setActiveTab('dashboard')}
+                />
+              )}
 
-          {activeTab === 'team_analytics' && (
-            <TeamAnalyticsView />
-          )}
+              {activeTab === 'reports' && !activeReportSession && userProfile.recentSessions.length > 0 && (
+                <PerformanceReportView
+                  sessionRecord={userProfile.recentSessions[0]}
+                  scenario={scenarios.find(s => s.id === userProfile.recentSessions[0].scenarioId) || activeScenario}
+                  onPracticeAgain={() => handleStartScenario(activeScenario)}
+                  onGoToDashboard={() => setActiveTab('dashboard')}
+                />
+              )}
 
-          {activeTab === 'admin_audit' && (
-            <AdminAuditView
-              piiMaskingEnabled={piiMaskingEnabled}
-              onTogglePiiMasking={() => setPiiMaskingEnabled(!piiMaskingEnabled)}
-            />
+              {activeTab === 'training_plans' && (
+                <TrainingPlansView
+                  userProfile={userProfile}
+                  scenarios={scenarios}
+                  onStartScenario={handleStartScenario}
+                />
+              )}
+
+              {activeTab === 'team_analytics' && <TeamAnalyticsView />}
+
+              {activeTab === 'admin_audit' && (
+                <AdminAuditView
+                  piiMaskingEnabled={piiMaskingEnabled}
+                  onTogglePiiMasking={() => setPiiMaskingEnabled(!piiMaskingEnabled)}
+                />
+              )}
+            </>
           )}
         </main>
-
       </div>
 
       {/* Manual Mode Modal */}

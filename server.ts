@@ -1,8 +1,15 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
+import multer from 'multer';
+import bcrypt from 'bcryptjs';
+
+import { db, seedInitialData, UserRecord, PolicyDocumentRecord, UserRole, PolicyAccessLevel } from './server/db';
+import { authenticateUser, requireRole, signUserToken, AuthenticatedRequest } from './server/auth';
+import { extractTextFromFileAsync, processDocumentChunks, searchPolicyChunks, isAccessPermitted } from './server/documentProcessor';
 
 dotenv.config({ override: true });
 
@@ -10,6 +17,26 @@ const app = express();
 const PORT = 3009;
 
 app.use(express.json({ limit: '10mb' }));
+
+// Multer Upload Configuration for Admin Policy Documents
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'policies');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `policy-${uniqueSuffix}${ext}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 }
+});
 
 // Lazy GoogleGenAI client
 let aiClient: GoogleGenAI | null = null;
@@ -672,8 +699,584 @@ Output JSON:
   }
 });
 
+/* ==========================================================================
+   AUTHENTICATION & USER MANAGEMENT ENDPOINTS
+   ========================================================================== */
+
+// 1. Auth: Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+
+    const user = db.getUserByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    if (user.status === 'inactive') {
+      return res.status(403).json({ error: 'Account is deactivated. Please contact your administrator.' });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    const token = signUserToken(user);
+    db.updateUser(user.id, { lastLogin: new Date().toISOString() });
+
+    db.addAuditLog({
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+      action: 'USER_LOGIN',
+      category: 'auth',
+      details: `Successful login as ${user.role}`
+    });
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin
+      }
+    });
+  } catch (err: any) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed due to an internal error.' });
+  }
+});
+
+// 2. Auth: Get Current User Profile
+app.get('/api/auth/me', authenticateUser, (req: AuthenticatedRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const user = db.getUserById(req.user.userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  res.json({
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      createdAt: user.createdAt,
+      lastLogin: user.lastLogin
+    }
+  });
+});
+
+// 3. Auth: Logout
+app.post('/api/auth/logout', authenticateUser, (req: AuthenticatedRequest, res) => {
+  if (req.user) {
+    db.addAuditLog({
+      userName: req.user.name,
+      userEmail: req.user.email,
+      userRole: req.user.role,
+      action: 'USER_LOGOUT',
+      category: 'auth',
+      details: 'User logged out'
+    });
+  }
+  res.json({ status: 'ok', message: 'Logged out successfully' });
+});
+
+// 4. Admin: List All Users
+app.get('/api/admin/users', authenticateUser, requireRole('admin'), (req, res) => {
+  const users = db.getUsers().map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    status: u.status,
+    createdAt: u.createdAt,
+    lastLogin: u.lastLogin
+  }));
+  res.json(users);
+});
+
+// 5. Admin: Create New User
+app.post('/api/admin/users', authenticateUser, requireRole('admin'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { name, email, password, role = 'employee' } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required.' });
+    }
+
+    if (!['admin', 'trainer', 'employee'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role. Role must be admin, trainer, or employee.' });
+    }
+
+    const existing = db.getUserByEmail(email);
+    if (existing) {
+      return res.status(400).json({ error: 'A user with this email address already exists.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const newUser: UserRecord = {
+      id: `usr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      passwordHash,
+      role: role as UserRole,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+
+    db.createUser(newUser);
+
+    db.addAuditLog({
+      userName: req.user?.name || 'Admin',
+      userEmail: req.user?.email || 'admin',
+      userRole: req.user?.role || 'admin',
+      action: 'CREATE_USER',
+      category: 'user',
+      details: `Created new user ${newUser.name} (${newUser.email}) with role ${newUser.role}`,
+      resource: newUser.id
+    });
+
+    res.json({
+      message: 'User created successfully',
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        status: newUser.status,
+        createdAt: newUser.createdAt
+      }
+    });
+  } catch (err: any) {
+    console.error('Error creating user:', err);
+    res.status(500).json({ error: 'Failed to create user.' });
+  }
+});
+
+// 6. Admin: Update User
+app.put('/api/admin/users/:id', authenticateUser, requireRole('admin'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { name, role, status, password } = req.body;
+
+    const user = db.getUserById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const updates: Partial<UserRecord> = {};
+    if (name) updates.name = name.trim();
+    if (role && ['admin', 'trainer', 'employee'].includes(role)) updates.role = role as UserRole;
+    if (status && ['active', 'inactive'].includes(status)) updates.status = status;
+    if (password) updates.passwordHash = await bcrypt.hash(password, 10);
+
+    const updated = db.updateUser(id, updates);
+
+    db.addAuditLog({
+      userName: req.user?.name || 'Admin',
+      userEmail: req.user?.email || 'admin',
+      userRole: req.user?.role || 'admin',
+      action: 'UPDATE_USER',
+      category: 'user',
+      details: `Updated user ${user.name} details: ${Object.keys(updates).join(', ')}`,
+      resource: id
+    });
+
+    res.json({
+      message: 'User updated successfully',
+      user: updated ? {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        role: updated.role,
+        status: updated.status,
+        createdAt: updated.createdAt,
+        lastLogin: updated.lastLogin
+      } : null
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update user.' });
+  }
+});
+
+// 7. Admin: Delete User
+app.delete('/api/admin/users/:id', authenticateUser, requireRole('admin'), (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const user = db.getUserById(id);
+  if (!user) return res.status(404).json({ error: 'User not found.' });
+
+  if (user.id === req.user?.userId) {
+    return res.status(400).json({ error: 'You cannot delete your own admin account while logged in.' });
+  }
+
+  db.deleteUser(id);
+
+  db.addAuditLog({
+    userName: req.user?.name || 'Admin',
+    userEmail: req.user?.email || 'admin',
+    userRole: req.user?.role || 'admin',
+    action: 'DELETE_USER',
+    category: 'user',
+    details: `Deleted user ${user.name} (${user.email})`,
+    resource: id
+  });
+
+  res.json({ message: 'User deleted successfully' });
+});
+
+
+/* ==========================================================================
+   ADMIN POLICY MANAGEMENT & RAG ENDPOINTS
+   ========================================================================== */
+
+// 8. Admin: Upload Policy Files (Single, Multi-file, or Folder batch)
+app.post('/api/admin/policies/upload', authenticateUser, requireRole('admin'), upload.array('files'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No policy files uploaded.' });
+    }
+
+    const { category = 'General', accessLevel = 'EMPLOYEE' } = req.body;
+    const uploadedDocs: PolicyDocumentRecord[] = [];
+
+    for (const file of files) {
+      const docId = `pol-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+      // === AUTO-VERSIONING: Deactivate old versions of same document ===
+      const existingPolicies = db.getPolicies();
+      const baseName = file.originalname.replace(/\.[^/.]+$/, '').trim().toLowerCase();
+      const previousVersions = existingPolicies.filter(p => {
+        const existingBase = p.originalName.replace(/\.[^/.]+$/, '').trim().toLowerCase();
+        return existingBase === baseName && p.isActive;
+      });
+
+      let newVersion = 1;
+      if (previousVersions.length > 0) {
+        const maxVersion = Math.max(...previousVersions.map(p => p.version || 1));
+        newVersion = maxVersion + 1;
+
+        // Mark all previous versions as inactive
+        for (const prev of previousVersions) {
+          db.savePolicy({ ...prev, isActive: false, status: 'inactive' });
+          // Mark all chunks of old version as inactive
+          const oldChunks = db.getChunks().filter(c => c.documentId === prev.id);
+          const inactiveChunks = oldChunks.map(c => ({ ...c, isActive: false }));
+          db.saveChunks(inactiveChunks);
+        }
+
+        db.addAuditLog({
+          userName: req.user?.name || 'Admin',
+          userEmail: req.user?.email || 'admin',
+          userRole: req.user?.role || 'admin',
+          action: 'POLICY_VERSION_DEACTIVATE',
+          category: 'policy',
+          details: `Auto-deactivated ${previousVersions.length} older version(s) of "${file.originalname}" (v${newVersion - 1} → v${newVersion})`,
+          resource: docId
+        });
+      }
+
+      // === ASYNC PDF TEXT EXTRACTION ===
+      const { text: rawText } = await extractTextFromFileAsync(file.path, file.originalname, file.mimetype);
+
+      const docRecord: PolicyDocumentRecord = {
+        id: docId,
+        filename: file.filename,
+        originalName: file.originalname,
+        category: category as any,
+        accessLevel: accessLevel as PolicyAccessLevel,
+        mimeType: file.mimetype || 'application/octet-stream',
+        size: file.size,
+        uploadedBy: req.user?.name || 'Admin',
+        uploadedAt: new Date().toISOString(),
+        status: 'indexed',
+        version: newVersion,
+        isActive: true,
+        chunkCount: 0,
+        summary: rawText.slice(0, 180) + (rawText.length > 180 ? '...' : ''),
+        extractedTextSnippet: rawText.slice(0, 300),
+        filePath: file.path
+      };
+
+      const chunks = processDocumentChunks(docRecord, rawText);
+      docRecord.chunkCount = chunks.length;
+
+      db.savePolicy(docRecord);
+      db.saveChunks(chunks);
+
+      uploadedDocs.push(docRecord);
+
+      db.addAuditLog({
+        userName: req.user?.name || 'Admin',
+        userEmail: req.user?.email || 'admin',
+        userRole: req.user?.role || 'admin',
+        action: 'POLICY_UPLOAD',
+        category: 'policy',
+        details: `Uploaded policy "${docRecord.originalName}" v${newVersion} (${docRecord.category}) access=${docRecord.accessLevel}. Generated ${chunks.length} RAG chunks.`,
+        resource: docId
+      });
+    }
+
+    res.json({
+      message: `Successfully processed ${uploadedDocs.length} policy file(s).`,
+      policies: uploadedDocs
+    });
+  } catch (err: any) {
+    console.error('Error in policy upload:', err);
+    res.status(500).json({ error: 'Failed to upload and process policy documents.' });
+  }
+});
+
+// 9. Admin & Role Policy Listing
+app.get('/api/admin/policies', authenticateUser, requireRole('admin'), (req, res) => {
+  res.json(db.getPolicies());
+});
+
+// 9b. Admin: Policy Statistics (KPI counts)
+app.get('/api/admin/policies/stats', authenticateUser, requireRole('admin'), (req, res) => {
+  const policies = db.getPolicies();
+  const stats = {
+    total: policies.length,
+    active: policies.filter(p => p.isActive === true).length,
+    processing: policies.filter(p => p.status === 'processing').length,
+    failed: policies.filter(p => p.status === 'failed').length
+  };
+  res.json(stats);
+});
+
+app.get('/api/policies', authenticateUser, (req: AuthenticatedRequest, res) => {
+  const userRole = req.user?.role || 'employee';
+  const allPolicies = db.getPolicies();
+  const visible = allPolicies.filter(p => isAccessPermitted(userRole, p.accessLevel));
+  res.json(visible);
+});
+
+// 10. Admin: Update Policy Details / Access Level / isActive Toggle
+app.put('/api/admin/policies/:id', authenticateUser, requireRole('admin'), (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { category, accessLevel, status, version, isActive } = req.body;
+  const policy = db.getPolicyById(id);
+  if (!policy) return res.status(404).json({ error: 'Policy not found.' });
+
+  const updates: Partial<PolicyDocumentRecord> = {};
+  if (category) updates.category = category;
+  if (accessLevel) updates.accessLevel = accessLevel;
+  if (status) updates.status = status;
+  if (version) updates.version = Number(version);
+  if (typeof isActive === 'boolean') {
+    updates.isActive = isActive;
+    updates.status = isActive ? 'indexed' : 'inactive';
+  }
+
+  const updated = db.savePolicy({ ...policy, ...updates });
+
+  // Sync access level to chunks
+  if (accessLevel && accessLevel !== policy.accessLevel) {
+    const chunks = db.getChunks().filter(c => c.documentId === id);
+    const updatedChunks = chunks.map(c => ({ ...c, accessLevel }));
+    db.saveChunks(updatedChunks);
+  }
+
+  // Sync isActive to chunks
+  if (typeof isActive === 'boolean') {
+    const chunks = db.getChunks().filter(c => c.documentId === id);
+    const updatedChunks = chunks.map(c => ({ ...c, isActive }));
+    db.saveChunks(updatedChunks);
+  }
+
+  db.addAuditLog({
+    userName: req.user?.name || 'Admin',
+    userEmail: req.user?.email || 'admin',
+    userRole: req.user?.role || 'admin',
+    action: typeof isActive === 'boolean' ? (isActive ? 'POLICY_ACTIVATE' : 'POLICY_DEACTIVATE') : 'POLICY_UPDATE',
+    category: 'policy',
+    details: `Updated policy "${policy.originalName}": ${Object.keys(updates).join(', ')}`,
+    resource: id
+  });
+
+  res.json({ message: 'Policy updated successfully', policy: updated });
+});
+
+// 11. Admin: Delete Policy
+app.delete('/api/admin/policies/:id', authenticateUser, requireRole('admin'), (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const policy = db.getPolicyById(id);
+  if (!policy) return res.status(404).json({ error: 'Policy document not found.' });
+
+  if (policy.filePath && fs.existsSync(policy.filePath)) {
+    try { fs.unlinkSync(policy.filePath); } catch (e) {}
+  }
+
+  db.deletePolicy(id);
+
+  db.addAuditLog({
+    userName: req.user?.name || 'Admin',
+    userEmail: req.user?.email || 'admin',
+    userRole: req.user?.role || 'admin',
+    action: 'POLICY_DELETE',
+    category: 'policy',
+    details: `Deleted policy document "${policy.originalName}"`,
+    resource: id
+  });
+
+  res.json({ message: 'Policy document deleted successfully' });
+});
+
+// 12. Admin: Reprocess Policy File
+app.post('/api/admin/policies/:id/reprocess', authenticateUser, requireRole('admin'), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const policy = db.getPolicyById(id);
+  if (!policy) return res.status(404).json({ error: 'Policy document not found.' });
+
+  try {
+    const { text: rawText } = await extractTextFromFileAsync(policy.filePath || '', policy.originalName, policy.mimeType);
+    const chunks = processDocumentChunks(policy, rawText);
+    policy.chunkCount = chunks.length;
+    policy.status = 'indexed';
+    policy.isActive = true;
+    policy.extractedTextSnippet = rawText.slice(0, 300);
+
+    db.savePolicy(policy);
+    db.saveChunks(chunks);
+
+    db.addAuditLog({
+      userName: req.user?.name || 'Admin',
+      userEmail: req.user?.email || 'admin',
+      userRole: req.user?.role || 'admin',
+      action: 'POLICY_REPROCESS',
+      category: 'policy',
+      details: `Reprocessed policy "${policy.originalName}". Indexed ${chunks.length} chunks.`,
+      resource: id
+    });
+
+    res.json({ message: `Policy reprocessed successfully with ${chunks.length} chunks.`, policy });
+  } catch (err: any) {
+    console.error('Error reprocessing policy:', err);
+    res.status(500).json({ error: 'Failed to reprocess policy document.' });
+  }
+});
+
+// 13. Download Policy File
+app.get('/api/policies/download/:id', authenticateUser, (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userRole = req.user?.role || 'employee';
+  const policy = db.getPolicyById(id);
+
+  if (!policy) return res.status(404).json({ error: 'Policy file not found.' });
+
+  if (!isAccessPermitted(userRole, policy.accessLevel)) {
+    return res.status(403).json({ error: 'Forbidden: You do not have permission to download this policy document.' });
+  }
+
+  if (policy.filePath && fs.existsSync(policy.filePath)) {
+    return res.download(policy.filePath, policy.originalName);
+  }
+
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${policy.originalName}.txt"`);
+  res.send(`Company Policy Document: ${policy.originalName}\nCategory: ${policy.category}\nAccess Level: ${policy.accessLevel}\n\n${policy.extractedTextSnippet || 'Document content.'}`);
+});
+
+// 14. Audit Logs Endpoint
+app.get('/api/admin/audit-logs', authenticateUser, requireRole('admin'), (req, res) => {
+  res.json(db.getAuditLogs());
+});
+
+/* ==========================================================================
+   ROLE-BASED RAG AI ASSISTANT CHAT
+   ========================================================================== */
+
+app.post('/api/assistant/chat', authenticateUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { message, history = [] } = req.body;
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Message text is required.' });
+    }
+
+    const userRole = req.user?.role || 'employee';
+    const userName = req.user?.name || 'User';
+
+    const searchResults = searchPolicyChunks(message, userRole, 4);
+
+    const relevantChunks = searchResults.map(r => r.chunk);
+    const sources = relevantChunks.map(c => ({
+      documentTitle: c.documentTitle,
+      sectionTitle: c.sectionTitle || 'General Policy',
+      pageNumber: c.pageNumber || 1,
+      accessLevel: c.accessLevel
+    }));
+
+    const ai = getAi();
+
+    if (!ai || searchResults.length === 0) {
+      if (searchResults.length === 0) {
+        return res.json({
+          answer: "I couldn't find this information in the available company policies. Please contact HR or your administrator for clarification.",
+          sources: []
+        });
+      }
+
+      const topChunk = searchResults[0].chunk;
+      return res.json({
+        answer: `Based on company policy (${topChunk.documentTitle}):\n\n${topChunk.chunkText}\n\nIf you require further clarification, please contact HR or your administrator.`,
+        sources
+      });
+    }
+
+    const contextText = relevantChunks.map(c =>
+      `[Source: "${c.documentTitle}" | Section: ${c.sectionTitle || 'General'} | Access Level: ${c.accessLevel}]\n${c.chunkText}`
+    ).join('\n\n---\n\n');
+
+    const prompt = `You are the official Role-Aware AI Company Support & Policy Assistant.
+User Name: ${userName}
+User Role: ${userRole.toUpperCase()}
+
+Retrieved Company Policy Documents (Role-Filtered Context):
+${contextText}
+
+Conversation History:
+${history.slice(-6).map((h: any) => `${h.sender.toUpperCase()}: ${h.text}`).join('\n')}
+
+User Question: "${message}"
+
+CRITICAL INSTRUCTIONS:
+1. Answer the user's question clearly, professionally, and directly using ONLY the provided company policy context.
+2. STRICT ANTI-HALLUCINATION RULE: If the retrieved company policy context does NOT contain sufficient information to answer the user's question, respond with:
+"I couldn't find this information in the available company policies. Please contact HR or your administrator for clarification."
+DO NOT fabricate company leave days, salary rules, working hours, benefits, HR procedures, or security policies.
+3. CITATION REQUIREMENT: Include exact policy citations based on the provided sources.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.7-flash',
+      contents: prompt,
+      config: {
+        temperature: 0.2
+      }
+    });
+
+    const answer = response.text || "I couldn't find this information in the available company policies. Please contact HR or your administrator for clarification.";
+
+    res.json({
+      answer,
+      sources
+    });
+  } catch (err: any) {
+    console.error('Error in /api/assistant/chat:', err);
+    res.status(500).json({ error: 'Failed to process AI policy request.' });
+  }
+});
+
 // Vite Middleware for SPA serving
 async function startServer() {
+  await seedInitialData();
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },

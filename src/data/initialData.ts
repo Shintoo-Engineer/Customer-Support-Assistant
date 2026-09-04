@@ -323,7 +323,7 @@ export const INITIAL_USER_PROFILE: AgentProfile = {
   id: 'agent-001',
   name: 'Alex Morgan',
   email: 'alex.morgan@supportpro.ai',
-  role: 'agent',
+  role: 'employee',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   level: 4,
   xp: 3450,

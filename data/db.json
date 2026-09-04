@@ -1,0 +1,309 @@
+{
+  "users": [
+    {
+      "id": "usr-admin-1",
+      "name": "System Admin",
+      "email": "admin@example.com",
+      "passwordHash": "$2b$10$i7Bxjv.G02J4R78F1u0fmO8udSE.X02Rf3qCX7PvBiMzNryB7JJba",
+      "role": "admin",
+      "status": "active",
+      "createdAt": "2026-09-04T13:51:00.374Z",
+      "lastLogin": "2026-09-04T14:58:40.683Z"
+    },
+    {
+      "id": "usr-trainer-1",
+      "name": "Sarah Jenkins (Trainer)",
+      "email": "trainer@example.com",
+      "passwordHash": "$2b$10$qnvXT5N/RCNalAoWWJmHIuffSfUixhXz.UbBQLVzfSjLhGSzF9E3W",
+      "role": "trainer",
+      "status": "active",
+      "createdAt": "2026-09-04T13:51:00.377Z",
+      "lastLogin": "2026-09-04T14:09:58.559Z"
+    },
+    {
+      "id": "usr-employee-1",
+      "name": "Alex Rivera (Employee)",
+      "email": "employee@example.com",
+      "passwordHash": "$2b$10$Y76lSgPVRFMW49luGmOgTeykefNxJrNxaEHpi2Uf.kumxtZ/3BQnC",
+      "role": "employee",
+      "status": "active",
+      "createdAt": "2026-09-04T13:51:00.377Z",
+      "lastLogin": "2026-09-04T14:10:31.770Z"
+    }
+  ],
+  "policies": [
+    {
+      "id": "pol-leave-101",
+      "filename": "Leave_Policy.pdf",
+      "originalName": "Company Leave & Time Off Policy.pdf",
+      "category": "HR",
+      "accessLevel": "EMPLOYEE",
+      "mimeType": "application/pdf",
+      "size": 142000,
+      "uploadedBy": "System Admin",
+      "uploadedAt": "2026-09-04T13:51:00.408Z",
+      "status": "indexed",
+      "version": 1,
+      "chunkCount": 2,
+      "summary": "Company leave entitlement rules including casual leave, paid time off, and notice periods.",
+      "extractedTextSnippet": "Employees are entitled to 12 casual leave days per calendar year. All leave requests must be submitted at least 2 days in advance."
+    },
+    {
+      "id": "pol-sec-201",
+      "filename": "IT_Security_Policy.pdf",
+      "originalName": "IT & Password Security Guidelines.pdf",
+      "category": "Security",
+      "accessLevel": "EMPLOYEE",
+      "mimeType": "application/pdf",
+      "size": 98000,
+      "uploadedBy": "System Admin",
+      "uploadedAt": "2026-09-04T13:51:00.408Z",
+      "status": "indexed",
+      "version": 1,
+      "chunkCount": 2,
+      "summary": "Password requirements, multi-factor authentication, and data security standards.",
+      "extractedTextSnippet": "Passwords must be at least 12 characters long and renewed every 90 days. Sharing passwords is strictly prohibited."
+    },
+    {
+      "id": "pol-trn-301",
+      "filename": "Trainer_Onboarding_Handbook.pdf",
+      "originalName": "Trainer Onboarding & Evaluation Handbook.pdf",
+      "category": "Training",
+      "accessLevel": "TRAINER",
+      "mimeType": "application/pdf",
+      "size": 215000,
+      "uploadedBy": "System Admin",
+      "uploadedAt": "2026-09-04T13:51:00.408Z",
+      "status": "indexed",
+      "version": 1,
+      "chunkCount": 2,
+      "summary": "Guiding employees through simulation practice, scoring standards, and performance reviews.",
+      "extractedTextSnippet": "Trainers must review employee simulation transcripts weekly and provide targeted coaching feedback within 24 hours."
+    },
+    {
+      "id": "pol-adm-401",
+      "filename": "Admin_Governance_Internal.pdf",
+      "originalName": "Internal Administrative Governance & Audit Policy.pdf",
+      "category": "Finance",
+      "accessLevel": "ADMIN",
+      "mimeType": "application/pdf",
+      "size": 310000,
+      "uploadedBy": "System Admin",
+      "uploadedAt": "2026-09-04T13:51:00.408Z",
+      "status": "indexed",
+      "version": 1,
+      "chunkCount": 2,
+      "summary": "Internal governance policy detailing system administrative controls and audit requirements.",
+      "extractedTextSnippet": "Admin actions including user deletion and system key rotations must be logged in the immutable audit registry."
+    }
+  ],
+  "chunks": [
+    {
+      "id": "pol-leave-101-chk-1",
+      "documentId": "pol-leave-101",
+      "documentTitle": "Company Leave & Time Off Policy.pdf",
+      "category": "HR",
+      "accessLevel": "EMPLOYEE",
+      "chunkText": "Section 1: Casual Leave Entitlement\nEmployees are entitled to 12 casual leave days per calendar year. Casual leave accrues on a monthly basis (1 day per month). Unused casual leave up to 6 days can be carried forward to the following year.",
+      "chunkIndex": 0,
+      "sectionTitle": "Section 1: Leave Entitlement",
+      "pageNumber": 1
+    },
+    {
+      "id": "pol-leave-101-chk-2",
+      "documentId": "pol-leave-101",
+      "documentTitle": "Company Leave & Time Off Policy.pdf",
+      "category": "HR",
+      "accessLevel": "EMPLOYEE",
+      "chunkText": "Section 2: Sick Leave and Maternity Leave\nSick leave requires a medical certificate if absent for more than 2 consecutive working days. Maternity leave provides 26 weeks of fully paid leave for eligible employees following statutory HR guidelines.",
+      "chunkIndex": 1,
+      "sectionTitle": "Section 2: Sick and Maternity Leave",
+      "pageNumber": 2
+    },
+    {
+      "id": "pol-sec-201-chk-1",
+      "documentId": "pol-sec-201",
+      "documentTitle": "IT & Password Security Guidelines.pdf",
+      "category": "Security",
+      "accessLevel": "EMPLOYEE",
+      "chunkText": "Section 3.1: Password Policy\nPasswords must be at least 12 characters, including uppercase, lowercase, numbers, and special characters. Passwords expire every 90 days.",
+      "chunkIndex": 0,
+      "sectionTitle": "Section 3.1: Passwords",
+      "pageNumber": 1
+    },
+    {
+      "id": "pol-trn-301-chk-1",
+      "documentId": "pol-trn-301",
+      "documentTitle": "Trainer Onboarding & Evaluation Handbook.pdf",
+      "category": "Training",
+      "accessLevel": "TRAINER",
+      "chunkText": "Section 4: Trainer Coaching Protocols\nTrainers are responsible for assessing employee response quality. Coaching scores above 85% qualify employees for autonomous tier 2 support queues.",
+      "chunkIndex": 0,
+      "sectionTitle": "Section 4: Coaching Protocols",
+      "pageNumber": 1
+    },
+    {
+      "id": "pol-adm-401-chk-1",
+      "documentId": "pol-adm-401",
+      "documentTitle": "Internal Administrative Governance & Audit Policy.pdf",
+      "category": "Finance",
+      "accessLevel": "ADMIN",
+      "chunkText": "Section 9: Executive Governance\nOnly System Administrators are permitted to configure system roles, modify global user permissions, or clear document knowledge stores.",
+      "chunkIndex": 0,
+      "sectionTitle": "Section 9: Governance",
+      "pageNumber": 1
+    }
+  ],
+  "auditLogs": [
+    {
+      "userName": "System",
+      "userEmail": "system@internal",
+      "userRole": "admin",
+      "action": "SYSTEM_SEED",
+      "category": "system",
+      "details": "Initialized default Admin, Trainer, and Employee seed accounts.",
+      "id": "audit-1788529860402-otk0",
+      "timestamp": "2026-09-04T13:51:00.402Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1788530661133-50w7",
+      "timestamp": "2026-09-04T14:04:21.133Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGOUT",
+      "category": "auth",
+      "details": "User logged out",
+      "id": "audit-1788530678197-st9w",
+      "timestamp": "2026-09-04T14:04:38.197Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as trainer",
+      "id": "audit-1788530713817-d9x9",
+      "timestamp": "2026-09-04T14:05:13.817Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGOUT",
+      "category": "auth",
+      "details": "User logged out",
+      "id": "audit-1788530728129-v2jn",
+      "timestamp": "2026-09-04T14:05:28.129Z"
+    },
+    {
+      "userName": "Alex Rivera (Employee)",
+      "userEmail": "employee@example.com",
+      "userRole": "employee",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as employee",
+      "id": "audit-1788530840371-sp64",
+      "timestamp": "2026-09-04T14:07:20.371Z"
+    },
+    {
+      "userName": "Alex Rivera (Employee)",
+      "userEmail": "employee@example.com",
+      "userRole": "employee",
+      "action": "USER_LOGOUT",
+      "category": "auth",
+      "details": "User logged out",
+      "id": "audit-1788530894930-nbtb",
+      "timestamp": "2026-09-04T14:08:14.930Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1788530970039-1j70",
+      "timestamp": "2026-09-04T14:09:30.039Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGOUT",
+      "category": "auth",
+      "details": "User logged out",
+      "id": "audit-1788530993447-qaw3",
+      "timestamp": "2026-09-04T14:09:53.447Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as trainer",
+      "id": "audit-1788530998571-e7je",
+      "timestamp": "2026-09-04T14:09:58.571Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGOUT",
+      "category": "auth",
+      "details": "User logged out",
+      "id": "audit-1788531014577-lb0s",
+      "timestamp": "2026-09-04T14:10:14.577Z"
+    },
+    {
+      "userName": "Alex Rivera (Employee)",
+      "userEmail": "employee@example.com",
+      "userRole": "employee",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as employee",
+      "id": "audit-1788531031777-gy7p",
+      "timestamp": "2026-09-04T14:10:31.777Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1788533853516-52hv",
+      "timestamp": "2026-09-04T14:57:33.516Z"
+    },
+    {
+      "userName": "Alex Rivera (Employee)",
+      "userEmail": "employee@example.com",
+      "userRole": "employee",
+      "action": "USER_LOGOUT",
+      "category": "auth",
+      "details": "User logged out",
+      "id": "audit-1788533914939-sja1",
+      "timestamp": "2026-09-04T14:58:34.939Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1788533920689-hl60",
+      "timestamp": "2026-09-04T14:58:40.689Z"
+    }
+  ]
+}

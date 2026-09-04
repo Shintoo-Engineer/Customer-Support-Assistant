@@ -20,6 +20,9 @@ import { UserRole } from '../types';
 
 export type ActiveTab =
   | 'dashboard'
+  | 'user_management'
+  | 'policy_management'
+  | 'ai_assistant'
   | 'live_console'
   | 'scenarios'
   | 'knowledge_base'
@@ -52,68 +55,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mainNavItems = [
     {
       id: 'dashboard' as ActiveTab,
-      label: 'Dashboard',
+      label: 'Role Dashboard',
       icon: LayoutDashboard,
-      roles: ['agent', 'trainer', 'admin']
+      roles: ['employee', 'trainer', 'admin']
+    },
+    {
+      id: 'user_management' as ActiveTab,
+      label: 'User Directory & Roles',
+      icon: Users2,
+      roles: ['admin']
+    },
+    {
+      id: 'policy_management' as ActiveTab,
+      label: 'Policy Uploads (RAG)',
+      icon: BookOpen,
+      roles: ['admin']
+    },
+    {
+      id: 'ai_assistant' as ActiveTab,
+      label: 'Policy AI Assistant',
+      icon: Bot,
+      roles: ['employee', 'trainer', 'admin']
     },
     {
       id: 'live_console' as ActiveTab,
       label: 'Live Practice Console',
       icon: Bot,
       badge: hasActiveSession ? 'Active' : undefined,
-      roles: ['agent', 'trainer', 'admin']
-    },
-    {
-      id: 'manual_mode' as ActiveTab,
-      label: 'Manual Message Mode',
-      icon: FileSearch,
-      roles: ['agent', 'trainer', 'admin']
-    },
-    {
-      id: 'replay' as ActiveTab,
-      label: 'Replay Training Mode',
-      icon: PlayCircle,
-      roles: ['agent', 'trainer', 'admin']
+      roles: ['employee', 'trainer', 'admin']
     },
     {
       id: 'scenarios' as ActiveTab,
       label: 'Scenarios & Generator',
       icon: Sparkles,
-      roles: ['agent', 'trainer', 'admin']
+      roles: ['employee', 'trainer', 'admin']
     },
     {
-      id: 'knowledge_base' as ActiveTab,
-      label: 'Knowledge Base (RAG)',
-      icon: BookOpen,
-      roles: ['agent', 'trainer', 'admin']
+      id: 'replay' as ActiveTab,
+      label: 'Replay Training Mode',
+      icon: PlayCircle,
+      roles: ['employee', 'trainer', 'admin']
     },
     {
       id: 'reports' as ActiveTab,
       label: 'Reports & History',
       icon: History,
-      roles: ['agent', 'trainer', 'admin']
+      roles: ['employee', 'trainer', 'admin']
     },
     {
       id: 'training_plans' as ActiveTab,
       label: 'Personalized Coaching',
       icon: GraduationCap,
-      roles: ['agent', 'trainer', 'admin']
-    },
-    {
-      id: 'leaderboard' as ActiveTab,
-      label: 'Leaderboard & XP',
-      icon: Trophy,
-      roles: ['agent', 'trainer', 'admin']
+      roles: ['employee', 'trainer', 'admin']
     },
     {
       id: 'team_analytics' as ActiveTab,
       label: 'Team Analytics',
-      icon: Users2,
+      icon: BarChart3,
       roles: ['trainer', 'admin']
     },
     {
       id: 'admin_audit' as ActiveTab,
-      label: 'Admin & Audit Logs',
+      label: 'Admin Audit Logs',
       icon: ShieldAlert,
       roles: ['admin']
     }

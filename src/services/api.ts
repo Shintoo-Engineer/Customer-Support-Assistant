@@ -5,8 +5,35 @@ import {
   KnowledgeDocument,
   PerformanceScore,
   CoachingTimelineEvent,
-  DifficultyLevel
+  DifficultyLevel,
+  UserAccount,
+  PolicyDocument,
+  PolicyStats,
+  UserRole,
+  PolicyAccessLevel,
+  AuditLogEntry
 } from '../types';
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem('csa_auth_token');
+}
+
+export function setAuthToken(token: string) {
+  localStorage.setItem('csa_auth_token', token);
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem('csa_auth_token');
+}
+
+function getAuthHeaders(customHeaders: Record<string, string> = {}) {
+  const token = getAuthToken();
+  const headers: Record<string, string> = { ...customHeaders };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 export async function analyzeTurnApi(params: {
   customerMessage: string;
@@ -378,3 +405,197 @@ export async function translateApi(text: string, targetLang: string): Promise<{
     };
   }
 }
+
+/* ==========================================================================
+   AUTHENTICATION & RBAC API CALLS
+   ========================================================================== */
+
+export async function loginApi(email: string, password: string): Promise<{ token: string; user: UserAccount }> {
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Login failed.');
+  }
+
+  setAuthToken(data.token);
+  return data;
+}
+
+export async function fetchCurrentUserApi(): Promise<UserAccount | null> {
+  const token = getAuthToken();
+  if (!token) return null;
+
+  try {
+    const res = await fetch('/api/auth/me', {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      clearAuthToken();
+      return null;
+    }
+    const data = await res.json();
+    return data.user;
+  } catch (err) {
+    clearAuthToken();
+    return null;
+  }
+}
+
+export async function logoutApi(): Promise<void> {
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+  } finally {
+    clearAuthToken();
+  }
+}
+
+/* ==========================================================================
+   ADMIN USER MANAGEMENT API CALLS
+   ========================================================================== */
+
+export async function fetchUsersApi(): Promise<UserAccount[]> {
+  const res = await fetch('/api/admin/users', {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch user directory');
+  return await res.json();
+}
+
+export async function createUserApi(user: { name: string; email: string; password: string; role: UserRole }): Promise<UserAccount> {
+  const res = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(user)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to create user');
+  return data.user;
+}
+
+export async function updateUserApi(id: string, updates: { name?: string; role?: UserRole; status?: 'active' | 'inactive'; password?: string }): Promise<UserAccount> {
+  const res = await fetch(`/api/admin/users/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(updates)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update user');
+  return data.user;
+}
+
+export async function deleteUserApi(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete user');
+}
+
+/* ==========================================================================
+   POLICY MANAGEMENT & RAG API CALLS
+   ========================================================================== */
+
+export async function uploadPoliciesApi(files: FileList | File[], category: string, accessLevel: PolicyAccessLevel): Promise<PolicyDocument[]> {
+  const formData = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    formData.append('files', files[i]);
+  }
+  formData.append('category', category);
+  formData.append('accessLevel', accessLevel);
+
+  const res = await fetch('/api/admin/policies/upload', {
+    method: 'POST',
+    headers: getAuthHeaders(), // Do not set Content-Type header so browser sets multipart boundary
+    body: formData
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to upload policy documents');
+  return data.policies;
+}
+
+export async function fetchAdminPoliciesApi(): Promise<PolicyDocument[]> {
+  const res = await fetch('/api/admin/policies', {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch policy library');
+  return await res.json();
+}
+
+export async function fetchUserPoliciesApi(): Promise<PolicyDocument[]> {
+  const res = await fetch('/api/policies', {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch accessible policy library');
+  return await res.json();
+}
+
+export async function updatePolicyApi(id: string, updates: { category?: string; accessLevel?: PolicyAccessLevel; status?: string; version?: number; isActive?: boolean }): Promise<PolicyDocument> {
+  const res = await fetch(`/api/admin/policies/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(updates)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update policy document');
+  return data.policy;
+}
+
+export async function fetchPolicyStatsApi(): Promise<PolicyStats> {
+  const res = await fetch('/api/admin/policies/stats', {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch policy statistics');
+  return await res.json();
+}
+
+export async function deletePolicyApi(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/policies/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete policy document');
+}
+
+export async function reprocessPolicyApi(id: string): Promise<PolicyDocument> {
+  const res = await fetch(`/api/admin/policies/${id}/reprocess`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to reprocess policy document');
+  return data.policy;
+}
+
+export async function askAssistantApi(message: string, history: ChatMessage[] = []): Promise<{
+  answer: string;
+  sources: { documentTitle: string; sectionTitle?: string; pageNumber?: number; accessLevel: string }[];
+}> {
+  const res = await fetch('/api/assistant/chat', {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ message, history })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'AI Assistant service unavailable');
+  return data;
+}
+
+export async function fetchAuditLogsApi(): Promise<AuditLogEntry[]> {
+  const res = await fetch('/api/admin/audit-logs', {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch audit activity logs');
+  return await res.json();
+}
+

@@ -1,63 +1,56 @@
-# Customer Support Assistant
+# Customer Support Assistant – Role-Based Access + Admin Policy Knowledge Base
 
-> **AI-Powered Customer Support Training, Live Guidance & Performance Analytics Platform**
-
-## 📌 Overview
-
-**Customer Support Assistant** is an AI-powered platform designed to help customer support agents improve their communication, problem-solving, product knowledge, and customer-handling skills.
-
-The application provides **real-time AI assistance** during customer-support interactions. It can simulate realistic customers, analyze customer intent and sentiment, retrieve relevant information from a knowledge base using **RAG (Retrieval-Augmented Generation)**, suggest better responses, monitor escalation risk, and generate detailed performance reports.
-
-The platform supports three interaction modes:
-
-* **Simulator Mode** – AI acts as a realistic customer.
-* **Manual Mode** – Agent enters or pastes customer messages.
-* **Replay Mode** – Agent practices using pre-loaded support conversations.
+> **Role-Based Customer Support & Employee Assistant System with Admin Policy RAG Engine, Multi-File/Folder Uploads, Anti-Hallucination Guardrails & Cited Q&A**
 
 ---
 
-## 🎯 Objectives
+## 🔐 Role-Based Access Control (RBAC) & Accounts
 
-The main objectives of the project are to:
+The application supports three distinct user roles with strict JWT-based server authentication and backend authorization:
 
-* Provide real-time assistance to customer support agents.
-* Simulate realistic customer-support situations.
-* Analyze customer intent, sentiment, and frustration.
-* Retrieve accurate information from the organization's knowledge base.
-* Suggest professional and empathetic responses.
-* Detect potential escalation before it occurs.
-* Evaluate agent performance.
-* Provide personalized coaching and training recommendations.
+### 1. 🛡️ ADMIN (`admin`)
+* Full system access & control center
+* User Management: Create, edit, assign roles, activate/deactivate, or delete users
+* Policy Management: Drag-and-drop single/multi-file or entire folder uploads (PDF, DOCX, DOC, TXT, CSV, XLSX)
+* Access Level Configuration: Set document permissions (`PUBLIC`, `EMPLOYEE`, `TRAINER`, `ADMIN`)
+* RAG Processing: Reprocess documents, manage chunking, and view extracted text
+* View immutable system activity Audit Logs
+* AI Policy Assistant Q&A
+
+### 2. 🎓 TRAINER (`trainer`)
+* Access Trainer Dashboard & Assigned Employee List
+* Create custom AI customer practice scenarios with specified difficulty levels & personas
+* Launch Interactive Practice Simulator & Live Console
+* AI Policy Assistant Q&A (access to `PUBLIC`, `EMPLOYEE`, and `TRAINER` policies)
+* Restricted from Admin Dashboard, User Management, and Policy File Uploads/Deletions (HTTP 403 Forbidden enforced)
+
+### 3. 👤 EMPLOYEE (`employee`)
+* Access Employee Dashboard & Practice Console
+* Search & download employee-accessible company policy documents
+* Ask AI Policy Assistant questions with verified source citations
+* Restricted from Admin Dashboard, User Management, Policy Management, and System Settings (HTTP 403 Forbidden enforced)
 
 ---
 
-## 👥 Users
+## 🔑 Demo Credentials for Testing
 
-### 👨‍💻 Support Agent
+| Role | Email | Password | Allowed Access |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@example.com` | `Admin123!` | Admin Dashboard, User Management, Policy Uploads (RAG), Audit Logs, AI Assistant |
+| **Trainer** | `trainer@example.com` | `Trainer123!` | Trainer Dashboard, Assigned Employees, Scenarios, Practice Console, AI Assistant |
+| **Employee** | `employee@example.com` | `Employee123!` | Employee Dashboard, Support Simulator, Policy Library, AI Assistant |
 
-The primary user of the application.
+---
 
-Agents can:
+## 📁 Admin Policy Upload & Document RAG Pipeline
 
-* Practice customer conversations.
-* Receive real-time AI coaching.
-* View suggested responses.
-* Access relevant knowledge.
-* Monitor customer sentiment and escalation risk.
-* Review their performance.
-* Improve their communication skills.
-
-### 👨‍💼 Admin / Manager
-
-Manages the platform and organization.
-
-Admins/Managers can:
-
-* Manage users and agents.
-* Create training scenarios.
-* Manage the knowledge base.
-* Monitor agent performance.
-* View reports and analytics.
+1. **Multi-File & Folder Batch Upload**: Admin selects files or an entire folder (`webkitdirectory`).
+2. **Text Extraction & Cleaning**: Automatically parses text from PDF, DOCX, TXT, CSV, XLSX formats.
+3. **Chunking & Indexing**: Segments extracted text into ~500-character vector chunks with section metadata.
+4. **Role Access Restriction**: Chunks inherit policy access levels (`PUBLIC`, `EMPLOYEE`, `TRAINER`, `ADMIN`).
+5. **Anti-Hallucination Guardrail**: If requested information is absent in company policies, AI responds:
+   > *"I couldn't find this information in the available company policies. Please contact HR or your administrator for clarification."*
+6. **Source Citations**: AI responses include verified source citations (`Document Title — Section — Page Number`).
 * Assign training activities.
 
 ### 🤖 AI System

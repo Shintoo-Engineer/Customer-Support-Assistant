@@ -22,6 +22,8 @@ import {
   AgentProfile
 } from '../types';
 
+import { UserAccount } from '../types';
+
 interface NavbarProps {
   currentMode: InteractionMode;
   onSelectMode: (mode: InteractionMode) => void;
@@ -37,6 +39,8 @@ interface NavbarProps {
   onOpenQuickManual: () => void;
   isMobileMenuOpen?: boolean;
   onToggleMobileMenu?: () => void;
+  currentUser?: UserAccount | null;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -53,7 +57,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onChangeLanguage,
   onOpenQuickManual,
   isMobileMenuOpen,
-  onToggleMobileMenu
+  onToggleMobileMenu,
+  currentUser,
+  onLogout
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -160,19 +166,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             </select>
           </div>
 
-          {/* User Role Selector (sm+ screens) */}
-          <div className="hidden sm:flex items-center gap-1 bg-slate-800/80 px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs">
-            <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <select
-              id="user-role-select"
-              value={userRole}
-              onChange={(e) => onChangeRole(e.target.value as UserRole)}
-              className="bg-transparent text-white font-medium focus:outline-none cursor-pointer text-xs capitalize"
-            >
-              <option value="agent" className="bg-slate-800 text-white">Role: Agent</option>
-              <option value="trainer" className="bg-slate-800 text-white">Role: Trainer</option>
-              <option value="admin" className="bg-slate-800 text-white">Role: Admin</option>
-            </select>
+          {/* User Role Badge */}
+          <div className="hidden sm:flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs font-semibold">
+            <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="text-white capitalize">{currentUser ? currentUser.role : userRole}</span>
+          </div>
+
+          {/* User Avatar & Logout */}
+          <div className="flex items-center gap-3 pl-2 border-l border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center font-bold text-xs text-white shadow-sm ring-2 ring-indigo-500/40">
+                {currentUser ? currentUser.name.charAt(0) : 'U'}
+              </div>
+              <div className="hidden xl:block text-left text-xs">
+                <div className="font-semibold text-slate-100">{currentUser ? currentUser.name : 'User'}</div>
+                <div className="text-[10px] text-slate-400 font-mono">{currentUser ? currentUser.email : ''}</div>
+              </div>
+            </div>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 text-xs font-medium transition"
+                title="Log Out of System"
+              >
+                Logout
+              </button>
+            )}
           </div>
 
           {/* PII Masking Toggle */}
