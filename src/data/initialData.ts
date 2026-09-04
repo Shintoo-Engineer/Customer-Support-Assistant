@@ -53,7 +53,7 @@ When duplicate charges occur due to gateway sync issues:
   {
     id: 'KB-103',
     title: 'Damaged & Delayed Package Deliveries',
-    category: 'Shipping',
+    category: 'Shipping', 
     updatedAt: '2026-08-15',
     chunkCount: 12,
     embeddingCount: 48,
@@ -124,7 +124,7 @@ export const INITIAL_SCENARIOS: Scenario[] = [
     id: 'SCENARIO-01',
     title: 'Duplicate Subscription Charge Dispute',
     category: 'Billing',
-    difficulty: 'hard',
+    difficulty: 'hard',                                                                   
     customerPersona: {
       id: 'persona-1',
       name: 'Marcus Vance',
