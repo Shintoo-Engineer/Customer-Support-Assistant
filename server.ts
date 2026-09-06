@@ -1,7 +1,8 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { createServer as createViteServer } from 'vite';
+import os from 'os';
+// vite is imported dynamically inside startServer() to avoid crashing serverless runtimes
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import multer from 'multer';
@@ -34,9 +35,17 @@ app.use((req, res, next) => {
 // Multer Upload Configuration for Admin Policy Documents
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads', 'policies');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    let uploadDir = path.join(process.cwd(), 'uploads', 'policies');
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+    } catch {
+      // In serverless / read-only environments (e.g. Vercel /var/task), fall back to os.tmpdir()
+      uploadDir = path.join(os.tmpdir(), 'csa-uploads', 'policies');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
     }
     cb(null, uploadDir);
   },
@@ -1301,6 +1310,7 @@ async function startServer() {
   await seedInitialData();
 
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa'

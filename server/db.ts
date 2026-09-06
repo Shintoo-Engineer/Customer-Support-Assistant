@@ -77,6 +77,8 @@ export interface AuditLogRecord {
   resource?: string;
 }
 
+import os from 'os';
+
 interface DatabaseSchema {
   users: UserRecord[];
   policies: PolicyDocumentRecord[];
@@ -86,40 +88,110 @@ interface DatabaseSchema {
 
 const DB_PATH = path.join(process.cwd(), 'data', 'db.json');
 
+// Built-in demo accounts pre-seeded with bcrypt password hashes
+// Admin: 'Admin123!', Trainer: 'Trainer123!', Employee: 'Employee123!'
+const DEFAULT_INITIAL_USERS: UserRecord[] = [
+  {
+    id: 'usr-admin-1',
+    name: 'System Admin',
+    email: 'admin@example.com',
+    passwordHash: '$2b$10$i7Bxjv.G02J4R78F1u0fmO8udSE.X02Rf3qCX7PvBiMzNryB7JJba',
+    role: 'admin',
+    status: 'active',
+    createdAt: '2026-09-04T13:51:00.374Z'
+  },
+  {
+    id: 'usr-trainer-1',
+    name: 'Sarah Jenkins (Trainer)',
+    email: 'trainer@example.com',
+    passwordHash: '$2b$10$qnvXT5N/RCNalAoWWJmHIuffSfUixhXz.UbBQLVzfSjLhGSzF9E3W',
+    role: 'trainer',
+    status: 'active',
+    createdAt: '2026-09-04T13:51:00.377Z'
+  },
+  {
+    id: 'usr-employee-1',
+    name: 'Alex Rivera (Employee)',
+    email: 'employee@example.com',
+    passwordHash: '$2b$10$Y76lSgPVRFMW49luGmOgTeykefNxJrNxaEHpi2Uf.kumxtZ/3BQnC',
+    role: 'employee',
+    status: 'active',
+    createdAt: '2026-09-04T13:51:00.377Z'
+  }
+];
+
+let cachedDb: DatabaseSchema | null = null;
+
 function ensureDbFile(): DatabaseSchema {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  if (cachedDb) {
+    return cachedDb;
   }
 
-  if (!fs.existsSync(DB_PATH)) {
-    const initialData: DatabaseSchema = {
-      users: [],
-      policies: [],
-      chunks: [],
-      auditLogs: []
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2), 'utf-8');
-    return initialData;
-  }
-
+  // 1. Try reading from primary DB_PATH (process.cwd()/data/db.json)
   try {
-    const raw = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(raw);
+    if (fs.existsSync(DB_PATH)) {
+      const raw = fs.readFileSync(DB_PATH, 'utf-8');
+      cachedDb = JSON.parse(raw);
+      if (cachedDb && Array.isArray(cachedDb.users) && cachedDb.users.length > 0) {
+        return cachedDb;
+      }
+    }
   } catch (err) {
-    console.error('Error reading db.json, creating new database file', err);
-    const initialData: DatabaseSchema = { users: [], policies: [], chunks: [], auditLogs: [] };
-    fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2), 'utf-8');
-    return initialData;
+    console.warn('Could not read from primary DB_PATH:', err);
   }
+
+  // 2. Try reading from tmp directory (serverless environment persistence)
+  const tmpDbPath = path.join(os.tmpdir(), 'csa-data', 'db.json');
+  try {
+    if (fs.existsSync(tmpDbPath)) {
+      const raw = fs.readFileSync(tmpDbPath, 'utf-8');
+      cachedDb = JSON.parse(raw);
+      if (cachedDb && Array.isArray(cachedDb.users) && cachedDb.users.length > 0) {
+        return cachedDb;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not read from tmpDbPath:', err);
+  }
+
+  // 3. Fallback to in-memory schema initialized with verified demo users
+  cachedDb = {
+    users: [...DEFAULT_INITIAL_USERS],
+    policies: [],
+    chunks: [],
+    auditLogs: []
+  };
+
+  saveDb(cachedDb);
+  return cachedDb;
 }
 
 function saveDb(data: DatabaseSchema) {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  cachedDb = data;
+
+  // Try writing to primary DB_PATH (local development)
+  try {
+    const dir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    return;
+  } catch {
+    // Expected on read-only serverless filesystems (e.g., Vercel /var/task)
   }
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+
+  // Try writing to /tmp directory (serverless fallback)
+  try {
+    const tmpDir = path.join(os.tmpdir(), 'csa-data');
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
+    const tmpDbPath = path.join(tmpDir, 'db.json');
+    fs.writeFileSync(tmpDbPath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch {
+    // Silently continue in-memory if even /tmp write is restricted
+  }
 }
 
 // Global Database API
