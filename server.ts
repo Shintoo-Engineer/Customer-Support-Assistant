@@ -14,7 +14,7 @@ import { extractTextFromFileAsync, processDocumentChunks, searchPolicyChunks, is
 dotenv.config({ override: true });
 
 const app = express();
-const PORT = 3009;
+const PORT = Number(process.env.PORT) || 3009;
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -1319,4 +1319,13 @@ async function startServer() {
   });
 }
 
-startServer();
+const isDirectExecution = typeof process !== 'undefined' &&
+  process.env.VERCEL !== '1' &&
+  !process.env.NOW_REGION &&
+  !process.env.SERVERLESS;
+
+if (isDirectExecution) {
+  startServer();
+}
+
+export { app, startServer };
