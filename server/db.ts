@@ -230,52 +230,39 @@ export const db = {
 // Seeding Initial Data
 export async function seedInitialData() {
   const users = db.getUsers();
-  
-  if (users.length === 0) {
-    console.log('Seeding initial system users...');
-    const adminPassword = await bcrypt.hash('Admin123!', 10);
-    const trainerPassword = await bcrypt.hash('Trainer123!', 10);
-    const employeePassword = await bcrypt.hash('Employee123!', 10);
 
-    const initialUsers: UserRecord[] = [
-      {
-        id: 'usr-admin-1',
-        name: 'System Admin',
-        email: 'admin@example.com',
-        passwordHash: adminPassword,
-        role: 'admin',
+  const demoAccounts: { id: string; name: string; email: string; defaultPass: string; role: UserRole }[] = [
+    { id: 'usr-admin-1', name: 'System Admin', email: 'admin@example.com', defaultPass: 'Admin123!', role: 'admin' },
+    { id: 'usr-trainer-1', name: 'Sarah Jenkins (Trainer)', email: 'trainer@example.com', defaultPass: 'Trainer123!', role: 'trainer' },
+    { id: 'usr-employee-1', name: 'Alex Rivera (Employee)', email: 'employee@example.com', defaultPass: 'Employee123!', role: 'employee' }
+  ];
+
+  let seededAny = false;
+  for (const demo of demoAccounts) {
+    const existing = db.getUserByEmail(demo.email);
+    if (!existing) {
+      const passwordHash = await bcrypt.hash(demo.defaultPass, 10);
+      db.createUser({
+        id: demo.id,
+        name: demo.name,
+        email: demo.email,
+        passwordHash,
+        role: demo.role,
         status: 'active',
         createdAt: new Date().toISOString()
-      },
-      {
-        id: 'usr-trainer-1',
-        name: 'Sarah Jenkins (Trainer)',
-        email: 'trainer@example.com',
-        passwordHash: trainerPassword,
-        role: 'trainer',
-        status: 'active',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'usr-employee-1',
-        name: 'Alex Rivera (Employee)',
-        email: 'employee@example.com',
-        passwordHash: employeePassword,
-        role: 'employee',
-        status: 'active',
-        createdAt: new Date().toISOString()
-      }
-    ];
+      });
+      seededAny = true;
+    }
+  }
 
-    initialUsers.forEach(u => db.createUser(u));
-
+  if (seededAny) {
     db.addAuditLog({
       userName: 'System',
       userEmail: 'system@internal',
       userRole: 'admin',
       action: 'SYSTEM_SEED',
       category: 'system',
-      details: 'Initialized default Admin, Trainer, and Employee seed accounts.'
+      details: 'Verified and initialized default Admin, Trainer, and Employee seed accounts.'
     });
   }
 

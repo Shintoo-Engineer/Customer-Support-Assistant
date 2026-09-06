@@ -14,6 +14,17 @@ import {
   AuditLogEntry
 } from '../types';
 
+/**
+ * Dynamically resolved API Base URL.
+ * In production deployments (e.g. Vercel + Render / Railway), VITE_API_URL or VITE_API_BASE_URL
+ * can be configured in the environment. Defaults to relative '' for unified origin or rewrites.
+ */
+export const API_BASE_URL: string = (
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+  ''
+).replace(/\/+$/, '');
+
 export function getAuthToken(): string | null {
   return localStorage.getItem('csa_auth_token');
 }
@@ -35,6 +46,56 @@ function getAuthHeaders(customHeaders: Record<string, string> = {}) {
   return headers;
 }
 
+/**
+ * Robust JSON request helper that safely handles HTML error pages,
+ * network failures, and standardizes error messages without throwing JSON parse exceptions.
+ */
+async function safeFetchJson<T = any>(
+  path: string,
+  init?: RequestInit,
+  fallbackError = 'Request failed'
+): Promise<T> {
+  const url = path.startsWith('http://') || path.startsWith('https://')
+    ? path
+    : `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch (netErr: any) {
+    throw new Error('Unable to connect to the backend server. Please verify network connection and API URL.');
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+
+  if (!res.ok) {
+    if (contentType.includes('application/json')) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || errorData.error || fallbackError);
+    }
+    throw new Error(
+      `Authentication server error (${res.status}): The API service is currently unavailable.`
+    );
+  }
+
+  if (contentType.includes('application/json')) {
+    return await res.json();
+  }
+
+  const rawText = await res.text();
+  if (rawText.trim().startsWith('<')) {
+    throw new Error(
+      'Authentication server returned an unexpected HTML response instead of JSON. Please verify backend API routing.'
+    );
+  }
+
+  try {
+    return JSON.parse(rawText);
+  } catch {
+    throw new Error('Invalid JSON response format received from server.');
+  }
+}
+
 export async function analyzeTurnApi(params: {
   customerMessage: string;
   conversationHistory: ChatMessage[];
@@ -43,13 +104,11 @@ export async function analyzeTurnApi(params: {
   knowledgeDocs?: KnowledgeDocument[];
 }): Promise<MessageAnalysis> {
   try {
-    const res = await fetch('/api/analyze-turn', {
+    return await safeFetchJson<MessageAnalysis>('/api/analyze-turn', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!res.ok) throw new Error('Turn analysis network error');
-    return await res.json();
   } catch (err) {
     console.warn('Fallback analysis due to:', err);
     return {
@@ -142,13 +201,11 @@ export async function simulateCustomerTurnApi(params: {
   stateChangeExplanation?: string;
 }> {
   try {
-    const res = await fetch('/api/simulate-customer', {
+    return await safeFetchJson('/api/simulate-customer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!res.ok) throw new Error('Customer simulation network error');
-    return await res.json();
   } catch (err) {
     console.warn('Fallback customer simulation due to:', err);
     const text = (params.agentResponse || '').toLowerCase();
@@ -201,13 +258,11 @@ export async function generateScenarioApi(params: {
   difficulty: DifficultyLevel;
 }): Promise<Scenario> {
   try {
-    const res = await fetch('/api/generate-scenario', {
+    return await safeFetchJson<Scenario>('/api/generate-scenario', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!res.ok) throw new Error('Generate scenario network error');
-    return await res.json();
   } catch (err) {
     console.warn('Fallback scenario generator due to:', err);
     return {
@@ -269,13 +324,11 @@ export async function generateReportApi(params: {
   }[];
 }> {
   try {
-    const res = await fetch('/api/generate-report', {
+    return await safeFetchJson('/api/generate-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!res.ok) throw new Error('Report generation network error');
-    return await res.json();
   } catch (err) {
     console.warn('Fallback report generator due to:', err);
     return {
@@ -367,13 +420,11 @@ export async function counterfactualApi(params: {
   reasoning: string;
 }> {
   try {
-    const res = await fetch('/api/counterfactual', {
+    return await safeFetchJson('/api/counterfactual', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!res.ok) throw new Error('Counterfactual network error');
-    return await res.json();
   } catch (err) {
     return {
       predictedCustomerReaction: "Thank you for looking into this so quickly! That puts my mind at ease.",
@@ -390,13 +441,11 @@ export async function translateApi(text: string, targetLang: string): Promise<{
   intent: string;
 }> {
   try {
-    const res = await fetch('/api/translate', {
+    return await safeFetchJson('/api/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, targetLang })
     });
-    if (!res.ok) throw new Error('Translation error');
-    return await res.json();
   } catch (err) {
     return {
       translatedText: text,
@@ -410,19 +459,23 @@ export async function translateApi(text: string, targetLang: string): Promise<{
    AUTHENTICATION & RBAC API CALLS
    ========================================================================== */
 
-export async function loginApi(email: string, password: string): Promise<{ token: string; user: UserAccount }> {
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
+export async function loginApi(
+  email: string,
+  password: string
+): Promise<{ token: string; user: UserAccount; success?: boolean }> {
+  const data = await safeFetchJson<{ token: string; user: UserAccount; success?: boolean }>(
+    '/api/auth/login',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    },
+    'Invalid email or password.'
+  );
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Login failed.');
+  if (data?.token) {
+    setAuthToken(data.token);
   }
-
-  setAuthToken(data.token);
   return data;
 }
 
@@ -431,14 +484,13 @@ export async function fetchCurrentUserApi(): Promise<UserAccount | null> {
   if (!token) return null;
 
   try {
-    const res = await fetch('/api/auth/me', {
-      headers: getAuthHeaders()
-    });
-    if (!res.ok) {
-      clearAuthToken();
-      return null;
-    }
-    const data = await res.json();
+    const data = await safeFetchJson<{ user: UserAccount }>(
+      '/api/auth/me',
+      {
+        headers: getAuthHeaders()
+      },
+      'Authentication session expired.'
+    );
     return data.user;
   } catch (err) {
     clearAuthToken();
@@ -448,10 +500,12 @@ export async function fetchCurrentUserApi(): Promise<UserAccount | null> {
 
 export async function logoutApi(): Promise<void> {
   try {
-    await fetch('/api/auth/logout', {
+    await safeFetchJson('/api/auth/logout', {
       method: 'POST',
       headers: getAuthHeaders()
     });
+  } catch (err) {
+    // Silently continue cleanup
   } finally {
     clearAuthToken();
   }
@@ -462,49 +516,65 @@ export async function logoutApi(): Promise<void> {
    ========================================================================== */
 
 export async function fetchUsersApi(): Promise<UserAccount[]> {
-  const res = await fetch('/api/admin/users', {
+  return await safeFetchJson<UserAccount[]>('/api/admin/users', {
     headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to fetch user directory');
-  return await res.json();
+  }, 'Failed to fetch user directory.');
 }
 
-export async function createUserApi(user: { name: string; email: string; password: string; role: UserRole }): Promise<UserAccount> {
-  const res = await fetch('/api/admin/users', {
-    method: 'POST',
-    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(user)
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to create user');
+export async function createUserApi(user: {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}): Promise<UserAccount> {
+  const data = await safeFetchJson<{ user: UserAccount }>(
+    '/api/admin/users',
+    {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(user)
+    },
+    'Failed to create user.'
+  );
   return data.user;
 }
 
-export async function updateUserApi(id: string, updates: { name?: string; role?: UserRole; status?: 'active' | 'inactive'; password?: string }): Promise<UserAccount> {
-  const res = await fetch(`/api/admin/users/${id}`, {
-    method: 'PUT',
-    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(updates)
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update user');
+export async function updateUserApi(
+  id: string,
+  updates: { name?: string; role?: UserRole; status?: 'active' | 'inactive'; password?: string }
+): Promise<UserAccount> {
+  const data = await safeFetchJson<{ user: UserAccount }>(
+    `/api/admin/users/${id}`,
+    {
+      method: 'PUT',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(updates)
+    },
+    'Failed to update user.'
+  );
   return data.user;
 }
 
 export async function deleteUserApi(id: string): Promise<void> {
-  const res = await fetch(`/api/admin/users/${id}`, {
-    method: 'DELETE',
-    headers: getAuthHeaders()
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to delete user');
+  await safeFetchJson(
+    `/api/admin/users/${id}`,
+    {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    },
+    'Failed to delete user.'
+  );
 }
 
 /* ==========================================================================
    POLICY MANAGEMENT & RAG API CALLS
    ========================================================================== */
 
-export async function uploadPoliciesApi(files: FileList | File[], category: string, accessLevel: PolicyAccessLevel): Promise<PolicyDocument[]> {
+export async function uploadPoliciesApi(
+  files: FileList | File[],
+  category: string,
+  accessLevel: PolicyAccessLevel
+): Promise<PolicyDocument[]> {
   const formData = new FormData();
   for (let i = 0; i < files.length; i++) {
     formData.append('files', files[i]);
@@ -512,90 +582,97 @@ export async function uploadPoliciesApi(files: FileList | File[], category: stri
   formData.append('category', category);
   formData.append('accessLevel', accessLevel);
 
-  const res = await fetch('/api/admin/policies/upload', {
-    method: 'POST',
-    headers: getAuthHeaders(), // Do not set Content-Type header so browser sets multipart boundary
-    body: formData
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to upload policy documents');
+  const data = await safeFetchJson<{ policies: PolicyDocument[] }>(
+    '/api/admin/policies/upload',
+    {
+      method: 'POST',
+      headers: getAuthHeaders(), // Do not set Content-Type header so browser sets multipart boundary
+      body: formData
+    },
+    'Failed to upload policy documents.'
+  );
   return data.policies;
 }
 
 export async function fetchAdminPoliciesApi(): Promise<PolicyDocument[]> {
-  const res = await fetch('/api/admin/policies', {
+  return await safeFetchJson<PolicyDocument[]>('/api/admin/policies', {
     headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to fetch policy library');
-  return await res.json();
+  }, 'Failed to fetch policy library.');
 }
 
 export async function fetchUserPoliciesApi(): Promise<PolicyDocument[]> {
-  const res = await fetch('/api/policies', {
+  return await safeFetchJson<PolicyDocument[]>('/api/policies', {
     headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to fetch accessible policy library');
-  return await res.json();
+  }, 'Failed to fetch accessible policy library.');
 }
 
-export async function updatePolicyApi(id: string, updates: { category?: string; accessLevel?: PolicyAccessLevel; status?: string; version?: number; isActive?: boolean }): Promise<PolicyDocument> {
-  const res = await fetch(`/api/admin/policies/${id}`, {
-    method: 'PUT',
-    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(updates)
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update policy document');
+export async function updatePolicyApi(
+  id: string,
+  updates: {
+    category?: string;
+    accessLevel?: PolicyAccessLevel;
+    status?: string;
+    version?: number;
+    isActive?: boolean;
+  }
+): Promise<PolicyDocument> {
+  const data = await safeFetchJson<{ policy: PolicyDocument }>(
+    `/api/admin/policies/${id}`,
+    {
+      method: 'PUT',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(updates)
+    },
+    'Failed to update policy document.'
+  );
   return data.policy;
 }
 
 export async function fetchPolicyStatsApi(): Promise<PolicyStats> {
-  const res = await fetch('/api/admin/policies/stats', {
+  return await safeFetchJson<PolicyStats>('/api/admin/policies/stats', {
     headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to fetch policy statistics');
-  return await res.json();
+  }, 'Failed to fetch policy statistics.');
 }
 
 export async function deletePolicyApi(id: string): Promise<void> {
-  const res = await fetch(`/api/admin/policies/${id}`, {
-    method: 'DELETE',
-    headers: getAuthHeaders()
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to delete policy document');
+  await safeFetchJson(
+    `/api/admin/policies/${id}`,
+    {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    },
+    'Failed to delete policy document.'
+  );
 }
 
 export async function reprocessPolicyApi(id: string): Promise<PolicyDocument> {
-  const res = await fetch(`/api/admin/policies/${id}/reprocess`, {
-    method: 'POST',
-    headers: getAuthHeaders()
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to reprocess policy document');
+  const data = await safeFetchJson<{ policy: PolicyDocument }>(
+    `/api/admin/policies/${id}/reprocess`,
+    {
+      method: 'POST',
+      headers: getAuthHeaders()
+    },
+    'Failed to reprocess policy document.'
+  );
   return data.policy;
 }
 
-export async function askAssistantApi(message: string, history: ChatMessage[] = []): Promise<{
+export async function askAssistantApi(
+  message: string,
+  history: ChatMessage[] = []
+): Promise<{
   answer: string;
   sources: { documentTitle: string; sectionTitle?: string; pageNumber?: number; accessLevel: string }[];
 }> {
-  const res = await fetch('/api/assistant/chat', {
+  return await safeFetchJson('/api/assistant/chat', {
     method: 'POST',
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ message, history })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'AI Assistant service unavailable');
-  return data;
+  }, 'AI Assistant service unavailable.');
 }
 
 export async function fetchAuditLogsApi(): Promise<AuditLogEntry[]> {
-  const res = await fetch('/api/admin/audit-logs', {
+  return await safeFetchJson<AuditLogEntry[]>('/api/admin/audit-logs', {
     headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to fetch audit activity logs');
-  return await res.json();
+  }, 'Failed to fetch audit activity logs.');
 }
-

@@ -18,6 +18,19 @@ const PORT = 3009;
 
 app.use(express.json({ limit: '10mb' }));
 
+// Cross-Origin Resource Sharing (CORS) Middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '*';
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 // Multer Upload Configuration for Admin Policy Documents
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -708,21 +721,21 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+      return res.status(400).json({ success: false, error: 'Email and password are required.', message: 'Email and password are required.' });
     }
 
     const user = db.getUserByEmail(email);
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ success: false, error: 'Invalid email or password.', message: 'Invalid email or password.' });
     }
 
     if (user.status === 'inactive') {
-      return res.status(403).json({ error: 'Account is deactivated. Please contact your administrator.' });
+      return res.status(403).json({ success: false, error: 'Account is deactivated. Please contact your administrator.', message: 'Account is deactivated. Please contact your administrator.' });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ success: false, error: 'Invalid email or password.', message: 'Invalid email or password.' });
     }
 
     const token = signUserToken(user);
@@ -737,7 +750,8 @@ app.post('/api/auth/login', async (req, res) => {
       details: `Successful login as ${user.role}`
     });
 
-    res.json({
+    res.status(200).json({
+      success: true,
       token,
       user: {
         id: user.id,
@@ -751,7 +765,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (err: any) {
     console.error('Login error:', err);
-    res.status(500).json({ error: 'Login failed due to an internal error.' });
+    res.status(500).json({ success: false, error: 'Login failed due to an internal error.', message: 'Login failed due to an internal error.' });
   }
 });
 
@@ -1271,6 +1285,15 @@ DO NOT fabricate company leave days, salary rules, working hours, benefits, HR p
     console.error('Error in /api/assistant/chat:', err);
     res.status(500).json({ error: 'Failed to process AI policy request.' });
   }
+});
+
+// Wildcard API 404 Handler (Guarantees no /api/* endpoint returns HTML)
+app.all('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `API endpoint ${req.method} ${req.path} not found.`,
+    message: `API endpoint ${req.method} ${req.path} not found.`
+  });
 });
 
 // Vite Middleware for SPA serving

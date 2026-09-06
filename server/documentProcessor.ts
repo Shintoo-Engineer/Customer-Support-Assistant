@@ -1,12 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-// Use a CJS-compatible require for pdf-parse (avoids ESM default export issues)
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-const pdfParse: (buf: Buffer) => Promise<{ text: string; numpages: number }> =
-  (new Function('require', "return require('pdf-parse')"))(
-    typeof require !== 'undefined' ? require : (m: string) => { throw new Error(`require not available for: ${m}`); }
-  );
 import { db, PolicyAccessLevel, PolicyChunkRecord, PolicyDocumentRecord, UserRole } from './db';
+
+let pdfParseModule: ((buf: Buffer) => Promise<{ text: string; numpages: number }>) | null = null;
+
+async function getPdfParse() {
+  if (!pdfParseModule) {
+    const mod = await import('pdf-parse');
+    pdfParseModule = (mod as any).default ?? mod;
+  }
+  return pdfParseModule;
+}
 
 // Access Level Permissibility Matrix
 export function isAccessPermitted(userRole: UserRole, policyAccessLevel: PolicyAccessLevel): boolean {
@@ -37,6 +41,7 @@ export async function extractTextFromFileAsync(
     if (ext === '.pdf' || mimeType.includes('pdf')) {
       const dataBuffer = fs.readFileSync(filePath);
       try {
+        const pdfParse = await getPdfParse();
         const pdfData = await pdfParse(dataBuffer);
         const rawText = pdfData.text || '';
         
