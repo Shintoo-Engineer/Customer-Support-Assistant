@@ -1,11 +1,20 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 from pathlib import Path
 import shutil
 
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import require_admin
 from app.models.database import SessionLocal
 from app.models.document import Document
+from app.models.user import User
 from app.services.ingestion_service import ingest_document
 
 
@@ -51,9 +60,9 @@ async def upload_document(
 
     document_type: str = Form(...),
 
-    role: str = Form("support_agent"),
+    db: Session = Depends(get_db),
 
-    db: Session = Depends(get_db)
+    current_user: User = Depends(require_admin)
 
 ):
 
@@ -70,31 +79,23 @@ async def upload_document(
 
 
     # --------------------------------------------------
-    # 2. Normalize role and document type
+    # 2. Normalize document name and type
     # --------------------------------------------------
 
-    role = role.strip().lower()
+    document_name = document_name.strip()
 
     document_type = document_type.strip().lower()
 
 
     # --------------------------------------------------
-    # 3. Validate role
+    # 3. Validate document name
     # --------------------------------------------------
 
-    allowed_roles = {
-        "admin",
-        "support_agent"
-    }
-
-    if role not in allowed_roles:
+    if not document_name:
 
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Invalid role. "
-                "Allowed roles are: admin, support_agent."
-            )
+            detail="Document name cannot be empty."
         )
 
 
@@ -120,16 +121,19 @@ async def upload_document(
 
 
     # --------------------------------------------------
-    # 5. Role-Based Access Control
+    # 5. Admin authorization
     # --------------------------------------------------
 
-    # Only admin can upload policy documents
+    # Authorization is determined from the authenticated
+    # user's JWT and database role.
+    #
+    # The frontend cannot choose or override the role.
 
-    if document_type == "policy" and role != "admin":
+    if current_user.role != "admin":
 
         raise HTTPException(
             status_code=403,
-            detail="Only admin can upload policy documents."
+            detail="Only admin users can upload documents."
         )
 
 
@@ -223,7 +227,7 @@ async def upload_document(
 
         version=new_version,
 
-        uploaded_by=role,
+        uploaded_by=current_user.email,
 
         status="active"
 
