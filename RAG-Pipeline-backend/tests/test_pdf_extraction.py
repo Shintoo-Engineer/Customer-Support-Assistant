@@ -1,7 +1,7 @@
 from app.services.pdf_service import extract_text_from_pdf
 
 
-pdf_path = "data/documents/refund_policy_v1.pdf"
+pdf_path = "data/documents/refund_policy_v2.pdf"
 
 pages = extract_text_from_pdf(pdf_path)
 

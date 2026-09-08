@@ -17,3 +17,4 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 from app.models.chat import ChatMessage
+from app.models.user import User

@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.models.database import SessionLocal
 from app.models.document import Document
+from app.api.dependencies import require_support_access
+from app.models.user import User
 
 
 router = APIRouter(
@@ -32,7 +34,8 @@ def get_db():
 
 @router.get("/")
 def get_all_documents(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_support_access)
 ):
 
     documents = (
@@ -68,7 +71,8 @@ def get_all_documents(
 @router.get("/history/{document_name}")
 def get_document_history(
     document_name: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_support_access)
 ):
 
     documents = (

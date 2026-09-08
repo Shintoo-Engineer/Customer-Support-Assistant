@@ -1,7 +1,7 @@
 from app.services.ingestion_service import ingest_document
 
 
-pdf_path = "data/documents/refund_policy_v1.pdf"
+pdf_path = "data/documents/refund_policy_v2.pdf"
 
 
 result = ingest_document(
@@ -9,7 +9,7 @@ result = ingest_document(
     document_id=1,
     document_name="Refund Policy",
     document_type="policy",
-    version=1,
+    version=2,
     uploaded_by="admin"
 )
 
