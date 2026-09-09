@@ -23,6 +23,9 @@ EMPATHY_SIGNALS = [
     "i'm on it",
     "replacement",
     "credit",
+    "cancel",
+    "cancelled",
+    "canceled",
 ]
 
 DISMISSIVE_SIGNALS = [

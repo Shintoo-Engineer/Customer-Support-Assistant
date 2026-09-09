@@ -8,6 +8,7 @@ from app.api.document_management import router as document_management_router
 from app.api.chat import router as chat_router
 from app.api.support import router as support_router
 from app.api.simulator import router as simulator_router
+from app.api.analysis import router as analysis_router
 from app.api.auth import router as auth_router
 from app.api.user_management import router as user_management_router
 
@@ -53,6 +54,9 @@ app.include_router(chat_router)
 # Customer support API
 app.include_router(support_router)
 app.include_router(simulator_router)
+
+# Intent and Sentiment Analysis API (Task 4)
+app.include_router(analysis_router)
 
 # User management API
 app.include_router(user_management_router)

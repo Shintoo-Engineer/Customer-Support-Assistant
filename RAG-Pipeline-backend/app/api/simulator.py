@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -10,6 +11,9 @@ from app.services.simulator_service import generate_customer_turn
 from app.services.simulator_state import initial_state
 from app.services.scenario_service import SCENARIOS, get_scenario_brief
 from app.services.persona_service import get_persona_brief
+from app.services.analysis_service import analyze_customer_message
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -146,6 +150,24 @@ def start_simulator_session(
         message_type="Text"
     )
     db.add(customer_msg)
+    db.flush()
+
+    logger.info("Task 3 customer message generated for session %s (turn 1)", session_row.session_id)
+
+    # Task 4 live analysis with failure isolation
+    analysis_dict = None
+    try:
+        logger.info("Task 4 analysis started for session %s", session_row.session_id)
+        analysis_resp = analyze_customer_message(
+            session_id=session_row.session_id,
+            customer_message=opening_message,
+            db=db
+        )
+        if analysis_resp:
+            analysis_dict = analysis_resp.model_dump()
+            logger.info("Task 4 analysis completed for session %s: intent=%s, emotion=%s", session_row.session_id, analysis_resp.intent.value, analysis_resp.emotion.value)
+    except Exception as e:
+        logger.warning("Task 4 analysis gracefully bypassed on exception: %s", e)
 
     # System state message to track current state without schema alterations
     system_state_msg = Message(
@@ -154,7 +176,8 @@ def start_simulator_session(
         message_text=json.dumps({
             "persona": request.persona,
             "scenario": scenario_key,
-            "state": start_state
+            "state": start_state,
+            "analysis": analysis_dict
         }),
         timestamp=datetime.utcnow(),
         message_type="System"
@@ -162,14 +185,19 @@ def start_simulator_session(
     db.add(system_state_msg)
 
     db.commit()
+    logger.info("Task 4 analysis persisted for session %s", session_row.session_id)
 
-    return {
+    response_data = {
         "session_id": session_row.session_id,
         "conversation_id": conversation_row.conversation_id,
         "customer_message": opening_message,
         "state": start_state,
         "turn": 1
     }
+    if analysis_dict:
+        response_data["analysis"] = analysis_dict
+
+    return response_data
 
 
 # --------------------------------------------------
@@ -287,6 +315,29 @@ def send_simulator_message(
         message_type="Text"
     )
     db.add(customer_msg_row)
+    db.flush()
+
+    # Calculate turn count
+    customer_turns = sum(
+        1 for m in dialogue_history if m["sender_type"] == "Customer"
+    ) + 1
+
+    logger.info("Task 3 customer message generated for session %s (turn %s)", session_row.session_id, customer_turns)
+
+    # Task 4 Live Analysis with failure isolation
+    analysis_dict = None
+    try:
+        logger.info("Task 4 analysis started for session %s (turn %s)", session_row.session_id, customer_turns)
+        analysis_resp = analyze_customer_message(
+            session_id=session_row.session_id,
+            customer_message=customer_message,
+            db=db
+        )
+        if analysis_resp:
+            analysis_dict = analysis_resp.model_dump()
+            logger.info("Task 4 analysis completed for session %s: intent=%s, emotion=%s", session_row.session_id, analysis_resp.intent.value, analysis_resp.emotion.value)
+    except Exception as e:
+        logger.warning("Task 4 turn analysis gracefully bypassed on exception: %s", e)
 
     # Persist updated state in a System message row
     system_state_row = Message(
@@ -295,7 +346,8 @@ def send_simulator_message(
         message_text=json.dumps({
             "persona": persona,
             "scenario": scenario_key,
-            "state": updated_state
+            "state": updated_state,
+            "analysis": analysis_dict
         }),
         timestamp=datetime.utcnow(),
         message_type="System"
@@ -312,14 +364,10 @@ def send_simulator_message(
         session_row.end_time = datetime.utcnow()
         conversation_row.escalation_risk = "High"
 
-    # Calculate turn count
-    customer_turns = sum(
-        1 for m in dialogue_history if m["sender_type"] == "Customer"
-    ) + 1
-
     db.commit()
+    logger.info("Task 4 analysis persisted for session %s", session_row.session_id)
 
-    return {
+    response_data = {
         "session_id": session_row.session_id,
         "customer_message": customer_message,
         "state": updated_state,
@@ -327,6 +375,10 @@ def send_simulator_message(
         "is_resolved": is_res,
         "is_escalated": is_esc
     }
+    if analysis_dict:
+        response_data["analysis"] = analysis_dict
+
+    return response_data
 
 
 # --------------------------------------------------
