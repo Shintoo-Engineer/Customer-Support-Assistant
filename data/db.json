@@ -8,7 +8,7 @@
       "role": "admin",
       "status": "active",
       "createdAt": "2026-09-04T13:51:00.374Z",
-      "lastLogin": "2026-09-16T12:43:08.714Z"
+      "lastLogin": "2026-09-16T13:54:42.282Z"
     },
     {
       "id": "usr-trainer-1",
@@ -18,7 +18,7 @@
       "role": "trainer",
       "status": "active",
       "createdAt": "2026-09-04T13:51:00.377Z",
-      "lastLogin": "2026-09-16T12:45:36.546Z"
+      "lastLogin": "2026-09-16T13:54:42.449Z"
     },
     {
       "id": "usr-employee-1",
@@ -28,7 +28,7 @@
       "role": "employee",
       "status": "active",
       "createdAt": "2026-09-04T13:51:00.377Z",
-      "lastLogin": "2026-09-16T12:43:09.135Z"
+      "lastLogin": "2026-09-16T13:54:42.737Z"
     }
   ],
   "policies": [
@@ -634,6 +634,116 @@
       "details": "Successful login as trainer",
       "id": "audit-1789562736551-gd54",
       "timestamp": "2026-09-16T12:45:36.551Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGOUT",
+      "category": "auth",
+      "details": "User logged out",
+      "id": "audit-1789563151743-4vkk",
+      "timestamp": "2026-09-16T12:52:31.743Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1789563155727-p8xu",
+      "timestamp": "2026-09-16T12:52:35.727Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1789566822569-cokg",
+      "timestamp": "2026-09-16T13:53:42.569Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as trainer",
+      "id": "audit-1789566822740-8guu",
+      "timestamp": "2026-09-16T13:53:42.740Z"
+    },
+    {
+      "userName": "Alex Rivera (Employee)",
+      "userEmail": "employee@example.com",
+      "userRole": "employee",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as employee",
+      "id": "audit-1789566822875-drfz",
+      "timestamp": "2026-09-16T13:53:42.875Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1789566876247-cyad",
+      "timestamp": "2026-09-16T13:54:36.247Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as trainer",
+      "id": "audit-1789566876474-r1d8",
+      "timestamp": "2026-09-16T13:54:36.474Z"
+    },
+    {
+      "userName": "Alex Rivera (Employee)",
+      "userEmail": "employee@example.com",
+      "userRole": "employee",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as employee",
+      "id": "audit-1789566876588-aip6",
+      "timestamp": "2026-09-16T13:54:36.588Z"
+    },
+    {
+      "userName": "System Admin",
+      "userEmail": "admin@example.com",
+      "userRole": "admin",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as admin",
+      "id": "audit-1789566882293-ou0n",
+      "timestamp": "2026-09-16T13:54:42.293Z"
+    },
+    {
+      "userName": "Sarah Jenkins (Trainer)",
+      "userEmail": "trainer@example.com",
+      "userRole": "trainer",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as trainer",
+      "id": "audit-1789566882450-5rc7",
+      "timestamp": "2026-09-16T13:54:42.450Z"
+    },
+    {
+      "userName": "Alex Rivera (Employee)",
+      "userEmail": "employee@example.com",
+      "userRole": "employee",
+      "action": "USER_LOGIN",
+      "category": "auth",
+      "details": "Successful login as employee",
+      "id": "audit-1789566882738-xc89",
+      "timestamp": "2026-09-16T13:54:42.738Z"
     }
   ]
 }

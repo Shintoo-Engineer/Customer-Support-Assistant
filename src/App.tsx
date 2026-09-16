@@ -348,7 +348,7 @@ export default function App() {
       />
 
       {/* Main Workspace Layout (Sidebar + Stage) */}
-      <div className="flex-1 flex overflow-hidden max-w-7xl w-full mx-auto px-0 sm:px-4 lg:px-8 py-0 sm:py-4 gap-4">
+      <div className="flex-1 flex overflow-hidden w-full max-w-full min-w-0 mx-auto px-0 sm:px-3 lg:px-4 py-0 sm:py-3 gap-3">
         
         {/* Left Vertical Navigation Sidebar */}
         <Sidebar
@@ -369,7 +369,7 @@ export default function App() {
         />
 
         {/* Center Main Stage Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-950/90 rounded-2xl">
+        <main className="flex-1 overflow-y-auto bg-slate-950/90 rounded-2xl min-w-0 w-full max-w-full">
           {!isTabAuthorized(currentUser.role, activeTab) ? (
             <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-2xl max-w-md mx-auto my-12 space-y-4 shadow-2xl">
               <div className="w-16 h-16 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20 font-bold text-xl">
