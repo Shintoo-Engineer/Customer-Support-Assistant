@@ -1,11 +1,13 @@
 import json
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session as DBSession
 
 from app.models.database import SessionLocal
 from app.models.simulator import Scenario, Session, Conversation, Message
+from app.services.analysis_service import analyze_customer_message
 from app.services.simulator_service import generate_customer_turn
 from app.services.simulator_state import initial_state
 from app.services.scenario_service import SCENARIOS, get_scenario_brief
@@ -115,18 +117,6 @@ def start_simulator_session(
     db.add(session_row)
     db.flush()
 
-    # Create Conversation row
-    conversation_row = Conversation(
-        session_id=session_row.session_id,
-        intent=scenario_key,
-        sentiment=request.initial_emotion,
-        resolution_status="Unresolved",
-        escalation_risk="Low",
-        created_at=datetime.utcnow()
-    )
-    db.add(conversation_row)
-    db.flush()
-
     # Build initial state
     start_state = initial_state(
         persona=request.persona,
@@ -136,6 +126,24 @@ def start_simulator_session(
     )
 
     opening_message = scenario_data["opening_complaint"]
+
+    # Task 4 analysis for the opening customer message.
+    opening_analysis = analyze_customer_message(
+        message=opening_message,
+        conversation_history=[]
+    )
+
+    # Create Conversation row using Task 4 analysis.
+    conversation_row = Conversation(
+        session_id=session_row.session_id,
+        intent=opening_analysis["intent"],
+        sentiment=opening_analysis["sentiment"],
+        resolution_status="Unresolved",
+        escalation_risk=opening_analysis["escalation_risk"],
+        created_at=datetime.utcnow()
+    )
+    db.add(conversation_row)
+    db.flush()
 
     # Customer's initial opening message
     customer_msg = Message(
@@ -167,6 +175,7 @@ def start_simulator_session(
         "session_id": session_row.session_id,
         "conversation_id": conversation_row.conversation_id,
         "customer_message": opening_message,
+        "analysis": opening_analysis,
         "state": start_state,
         "turn": 1
     }
@@ -243,7 +252,7 @@ def send_simulator_message(
     if not current_state:
         current_state = initial_state(persona, "neutral", 3, 3)
 
-    # Filter dialogue history for prompt
+    # Filter dialogue history for prompt and Task 4 context
     dialogue_history = [
         {
             "sender_type": m.sender_type,
@@ -278,6 +287,14 @@ def send_simulator_message(
     is_res = turn_result["is_resolved"]
     is_esc = turn_result["is_escalated"]
 
+    # Task 4 analysis for the newly generated customer message.
+    # The existing dialogue history contains the previous customer turns,
+    # so the analysis service can maintain conversation context.
+    customer_analysis = analyze_customer_message(
+        message=customer_message,
+        conversation_history=dialogue_history
+    )
+
     # Persist customer message
     customer_msg_row = Message(
         conversation_id=conversation_row.conversation_id,
@@ -302,11 +319,17 @@ def send_simulator_message(
     )
     db.add(system_state_row)
 
+    # Keep Conversation record synchronized with latest Task 4 analysis.
+    conversation_row.intent = customer_analysis["intent"]
+    conversation_row.sentiment = customer_analysis["sentiment"]
+    conversation_row.escalation_risk = customer_analysis["escalation_risk"]
+
     # Update session and conversation status if resolved or escalated
     if is_res:
         session_row.status = "Completed"
         session_row.end_time = datetime.utcnow()
         conversation_row.resolution_status = "Resolved"
+
     elif is_esc:
         session_row.status = "Completed"
         session_row.end_time = datetime.utcnow()
@@ -322,6 +345,7 @@ def send_simulator_message(
     return {
         "session_id": session_row.session_id,
         "customer_message": customer_message,
+        "analysis": customer_analysis,
         "state": updated_state,
         "turn": customer_turns,
         "is_resolved": is_res,
