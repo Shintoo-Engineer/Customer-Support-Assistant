@@ -272,30 +272,234 @@ app.post('/api/simulate-customer', async (req, res) => {
     };
 
     if (!ai) {
-      // Rule-based dynamic emotional state updater
-      const text = (agentResponse || '').toLowerCase();
-      const isEmpathetic = text.includes('sorry') || text.includes('understand') || text.includes('apologize') || text.includes('refund');
-      const isDismissive = text.includes('policy') && !isEmpathetic;
+      const text = (agentResponse || '').toLowerCase().trim();
+      const turnNumber = conversationHistory.length;
 
-      const frustrationDelta = isEmpathetic ? -25 : (isDismissive ? +20 : -5);
-      const trustDelta = isEmpathetic ? +20 : (isDismissive ? -15 : +5);
-      const satDelta = isEmpathetic ? +25 : -10;
+      // Classify the agent response intent and sentiment
+      const isGreeting =
+        text.startsWith('hello') ||
+        text.startsWith('hi') ||
+        text.startsWith('hey') ||
+        text.startsWith('good morning') ||
+        text.startsWith('good afternoon') ||
+        text.includes('how can i help') ||
+        text.includes('how may i assist') ||
+        text.includes('welcome');
+
+      const hasApology =
+        text.includes('sorry') ||
+        text.includes('apologize') ||
+        text.includes('apologies') ||
+        text.includes('my sincere apologies') ||
+        text.includes('pardon');
+
+      const hasEmpathy =
+        text.includes('understand') ||
+        text.includes('hear you') ||
+        text.includes('frustrat') ||
+        text.includes('stress') ||
+        text.includes('unacceptable') ||
+        text.includes('terrible') ||
+        text.includes('make this right') ||
+        text.includes('inconvenience') ||
+        hasApology;
+
+      const hasRefundOrResolution =
+        text.includes('refund') ||
+        text.includes('credit') ||
+        text.includes('waive') ||
+        text.includes('waived') ||
+        text.includes('revers') ||
+        text.includes('cancel') ||
+        text.includes('processed') ||
+        text.includes('initiated') ||
+        text.includes('resolved') ||
+        text.includes('fixed') ||
+        text.includes('authorized') ||
+        text.includes('replacement');
+
+      const hasTimelineOrConfirmation =
+        text.includes('business day') ||
+        text.includes('days') ||
+        text.includes('hours') ||
+        text.includes('receipt') ||
+        text.includes('confirmation') ||
+        text.includes('email') ||
+        text.includes('reference number') ||
+        text.includes('transaction id') ||
+        text.includes('tracking');
+
+      const hasPolicyReference =
+        text.includes('policy') ||
+        text.includes('terms') ||
+        text.includes('rule') ||
+        text.includes('conditions') ||
+        text.includes('kb-') ||
+        text.includes('according to');
+
+      const isPolicyBlunt = hasPolicyReference && !hasEmpathy && !hasRefundOrResolution;
+
+      const isDismissive =
+        text.includes('wait') ||
+        text.includes('calm down') ||
+        text.includes('hold on') ||
+        text.includes('nothing i can do') ||
+        text.includes('already explained') ||
+        text.includes('already told') ||
+        text.includes('as i said') ||
+        text.includes('not my department') ||
+        text.includes('cannot help') ||
+        text.includes("can't help") ||
+        (text.length < 8 && !isGreeting && !hasRefundOrResolution);
+
+      const isAskingInfo =
+        text.includes('could you') ||
+        text.includes('can you') ||
+        text.includes('please provide') ||
+        text.includes('what is your') ||
+        text.includes('transaction id') ||
+        text.includes('order number') ||
+        text.includes('account email') ||
+        text.includes('verify');
+
+      const isSupervisorEscalation =
+        text.includes('supervisor') ||
+        text.includes('manager') ||
+        text.includes('transfer you') ||
+        text.includes('escalat');
+
+      let frustrationDelta = 0;
+      let trustDelta = 0;
+      let patienceDelta = 0;
+      let satDelta = 0;
+      let escalationDelta = 0;
+      let stateExplanation = '';
+      let nextCustomerMessage = '';
+
+      if (isDismissive) {
+        if (text.includes('already explained') || text.includes('already told') || text.includes('as i said')) {
+          frustrationDelta = +30;
+          trustDelta = -25;
+          patienceDelta = -25;
+          satDelta = -20;
+          escalationDelta = +35;
+          nextCustomerMessage = "I heard you the first time, but that doesn't solve my problem! Why are you giving me the runaround instead of actually resolving this?";
+          stateExplanation = "Agent was repetitive/dismissive ('already explained'): Frustration spiked +30%, Escalation risk +35%.";
+        } else if (text.includes('wait') || text.includes('hold on')) {
+          frustrationDelta = +20;
+          trustDelta = -15;
+          patienceDelta = -20;
+          satDelta = -15;
+          escalationDelta = +25;
+          nextCustomerMessage = "I've already been waiting. Can you please tell me what is actually happening and why this hasn't been fixed yet?";
+          stateExplanation = "Agent told customer to wait without context: Frustration rose +20%, Patience dropped -20%.";
+        } else if (text.includes('calm down')) {
+          frustrationDelta = +35;
+          trustDelta = -30;
+          patienceDelta = -30;
+          satDelta = -25;
+          escalationDelta = +40;
+          nextCustomerMessage = "Don't tell me to calm down! Anyone in my position would be furious. Are you going to fix this or should I speak to your supervisor?";
+          stateExplanation = "Agent used invalidating phrase ('calm down'): Frustration spiked +35%, Escalation intent +40%.";
+        } else {
+          frustrationDelta = +25;
+          trustDelta = -20;
+          patienceDelta = -20;
+          satDelta = -15;
+          escalationDelta = +30;
+          nextCustomerMessage = "That is completely unhelpful. I am losing my patience here—please tell me what specific steps you are taking to fix this right now.";
+          stateExplanation = "Agent gave curt/dismissive response: Frustration rose +25%, Trust dropped -20%.";
+        }
+      } else if (isPolicyBlunt) {
+        frustrationDelta = +20;
+        trustDelta = -15;
+        patienceDelta = -15;
+        satDelta = -15;
+        escalationDelta = +20;
+        nextCustomerMessage = "I understand there is a policy, but I need you to actually help me with the duplicate charge rather than just quoting rules at me.";
+        stateExplanation = "Agent cited policy without empathy: Frustration rose +20%, Trust dropped -15%.";
+      } else if (isSupervisorEscalation) {
+        frustrationDelta = +5;
+        trustDelta = 0;
+        patienceDelta = -5;
+        satDelta = 0;
+        escalationDelta = +25;
+        nextCustomerMessage = "Yes, please connect me with a supervisor or manager immediately who has the authority to resolve this.";
+        stateExplanation = "Supervisor transfer initiated: Customer escalated to management.";
+      } else if (hasRefundOrResolution && hasEmpathy) {
+        frustrationDelta = -35;
+        trustDelta = +30;
+        patienceDelta = +20;
+        satDelta = +35;
+        escalationDelta = -35;
+        if (hasTimelineOrConfirmation) {
+          nextCustomerMessage = "Thank you so much for taking care of that. Will I also receive an email confirmation with the transaction details?";
+          stateExplanation = "Agent expressed empathy, authorized refund/resolution, and provided clear timeline: Frustration dropped -35%, Trust rose +30%.";
+        } else {
+          nextCustomerMessage = "Thank you for understanding and helping with the refund. Please let me know when the refund will appear on my account.";
+          stateExplanation = "Agent offered empathetic refund/resolution: Frustration dropped -35%, Trust rose +30%.";
+        }
+      } else if (hasRefundOrResolution && !hasEmpathy) {
+        frustrationDelta = -20;
+        trustDelta = +15;
+        patienceDelta = +10;
+        satDelta = +20;
+        escalationDelta = -20;
+        nextCustomerMessage = "Thank you for processing that. Could you give me the confirmation reference number and when it will take effect?";
+        stateExplanation = "Agent processed resolution without deep empathy: Frustration decreased -20%, Trust rose +15%.";
+      } else if (hasEmpathy) {
+        frustrationDelta = -15;
+        trustDelta = +15;
+        patienceDelta = +15;
+        satDelta = +15;
+        escalationDelta = -15;
+        nextCustomerMessage = "Thank you for acknowledging that. What are the exact steps you are going to take to fix this for me?";
+        stateExplanation = "Agent validated customer emotions: Frustration dropped -15%, Trust rose +15%.";
+      } else if (isAskingInfo) {
+        frustrationDelta = -5;
+        trustDelta = +10;
+        patienceDelta = +5;
+        satDelta = +5;
+        escalationDelta = -5;
+        nextCustomerMessage = "Sure, I have the transaction details right here. Please check the latest entry under my account so we can resolve this.";
+        stateExplanation = "Agent asked for clarifying information: Customer cooperated, Trust +10%.";
+      } else if (isGreeting) {
+        if (turnNumber <= 2) {
+          nextCustomerMessage = `Hi. I really hope you can help me because ${scenario?.initialProblem || 'I have a serious billing issue with my account'} and I need this taken care of right now.`;
+        } else {
+          nextCustomerMessage = "Hello, but let's please get back to resolving my issue. What can we do right now?";
+        }
+        frustrationDelta = -5;
+        trustDelta = +5;
+        satDelta = 0;
+        stateExplanation = "Greeting exchanged: Issue context clarified.";
+      } else {
+        // General informative response
+        frustrationDelta = -5;
+        trustDelta = +5;
+        satDelta = +5;
+        escalationDelta = -5;
+        if (currentState.frustration > 60) {
+          nextCustomerMessage = "Okay, but how long is this actually going to take? I need to be 100% sure this won't happen again next month.";
+        } else {
+          nextCustomerMessage = "Thank you for checking that for me. Does that mean I'll receive a confirmation email once it's posted?";
+        }
+        stateExplanation = "Agent provided informational response: Frustration adjusted moderately.";
+      }
 
       const newFrustration = Math.max(5, Math.min(100, currentState.frustration + frustrationDelta));
       const newTrust = Math.max(5, Math.min(100, currentState.trust + trustDelta));
+      const newPatience = Math.max(5, Math.min(100, currentState.patience + patienceDelta));
       const newSat = Math.max(5, Math.min(100, currentState.satisfaction + satDelta));
-      const newEscalation = Math.max(0, Math.min(100, currentState.escalationIntent - (isEmpathetic ? 30 : -15)));
+      const newEscalation = Math.max(0, Math.min(100, currentState.escalationIntent + escalationDelta));
 
-      const isResolved = newFrustration <= 20 && newSat >= 70;
+      const isResolved = newFrustration <= 22 && newSat >= 70;
       const isEscalated = newEscalation >= 85 || newFrustration >= 90;
 
-      let nextCustomerMessage = "Thank you for checking that for me. Does that mean I'll receive a confirmation email once it's posted?";
       if (isResolved) {
         nextCustomerMessage = "Thank you so much! That solves my problem completely. I really appreciate your quick help and understanding.";
       } else if (isEscalated) {
         nextCustomerMessage = "I have had enough of this runaround! Please transfer me to your supervisor or manager right now.";
-      } else if (newFrustration > 50) {
-        nextCustomerMessage = "Okay, but how long is this actually going to take? I need to be 100% sure this won't happen again next month.";
       }
 
       return res.json({
@@ -303,32 +507,32 @@ app.post('/api/simulate-customer', async (req, res) => {
         updatedCustomerState: {
           frustration: newFrustration,
           trust: newTrust,
-          patience: Math.max(5, Math.min(100, currentState.patience + (isEmpathetic ? 15 : -15))),
+          patience: newPatience,
           satisfaction: newSat,
           escalationIntent: newEscalation
         },
         isResolved,
         isEscalated,
-        stateChangeExplanation: isEmpathetic
-          ? "Agent expressed genuine empathy and offered immediate solution: Frustration dropped -25%, Trust rose +20%."
-          : "Agent provided informational response without deep empathy: Frustration adjusted moderately."
+        stateChangeExplanation: stateExplanation
       });
     }
 
     const prompt = `You are roleplaying as a realistic customer in a support training simulator.
-Persona Details:
-Name: ${scenario?.customerPersona?.name || 'Customer'}
-Personality Type: ${scenario?.customerPersona?.type || 'Customer'}
-Behavior: ${scenario?.customerPersona?.behaviorDescription || 'Customer with an issue'}
-Scenario Problem: ${scenario?.initialProblem || 'Support issue'}
-Escalation Trigger: ${scenario?.escalationTrigger || 'Robotic answers or refusal to help'}
+Scenario: ${scenario?.title || 'Support Case'}
+Category: ${scenario?.category || 'General'}
+Customer Persona:
+- Name: ${scenario?.customerPersona?.name || 'Customer'}
+- Type: ${scenario?.customerPersona?.type || 'Customer'}
+- Behavior: ${scenario?.customerPersona?.behaviorDescription || 'Customer with an issue'}
+- Initial Problem: ${scenario?.initialProblem || 'Support issue'}
+- Escalation Trigger: ${scenario?.escalationTrigger || 'Robotic answers or refusal to help'}
 
-Current Hidden Emotional State:
-Frustration: ${currentState.frustration}%
-Trust: ${currentState.trust}%
-Patience: ${currentState.patience}%
-Satisfaction: ${currentState.satisfaction}%
-Escalation Intent: ${currentState.escalationIntent}%
+Current Hidden Emotional State (0-100%):
+- Frustration: ${currentState.frustration}%
+- Trust: ${currentState.trust}%
+- Patience: ${currentState.patience}%
+- Satisfaction: ${currentState.satisfaction}%
+- Escalation Intent: ${currentState.escalationIntent}%
 
 Conversation Transcript so far:
 ${conversationHistory.map((m: any) => `${m.sender.toUpperCase()}: ${m.text}`).join('\n')}
@@ -336,16 +540,19 @@ ${conversationHistory.map((m: any) => `${m.sender.toUpperCase()}: ${m.text}`).jo
 Agent's Latest Response:
 "${agentResponse}"
 
-Task:
-1. Evaluate how the agent's response impacts the customer's emotions (empathy/clear solution reduces frustration; robotic/dismissive/blaming increases frustration).
-2. Calculate new emotional state percentages (0-100).
-3. If satisfaction is >= 75% and frustration <= 25%, mark isResolved: true and express genuine satisfaction.
-4. If escalationIntent >= 85% or frustration >= 90%, mark isEscalated: true and demand a manager.
-5. Generate the customer's next natural, conversational reply in character.
+Task Instructions:
+1. Dynamically evaluate how the agent's latest response impacts your emotions, trust, and satisfaction:
+   - Empathy, sincere apologies, taking personal ownership, and clear resolution (e.g. refunds, credits, fixes) drastically reduce frustration and increase trust and satisfaction.
+   - Robotic answers, telling the customer to "wait", saying "that's our policy", dismissive comments, or asking them to repeat information will spike frustration and escalation intent.
+   - Clarifying questions or requests for details are answered cooperatively if not rude.
+2. Calculate new emotional state percentages (0-100) for frustration, trust, patience, satisfaction, and escalationIntent.
+3. If satisfaction >= 70% and frustration <= 22%, mark isResolved: true and thank the agent genuinely.
+4. If escalationIntent >= 85% or frustration >= 90%, mark isEscalated: true and demand a manager/supervisor immediately.
+5. Generate your next natural, in-character customer message responding specifically to what the agent just said. Do not repeat canned responses.
 
-Output ONLY valid JSON:
+Return ONLY valid JSON matching this schema:
 {
-  "nextCustomerMessage": "Customer's next spoken message",
+  "nextCustomerMessage": "Customer's next spoken message responding directly to the agent",
   "updatedCustomerState": {
     "frustration": 45,
     "trust": 60,
@@ -355,7 +562,7 @@ Output ONLY valid JSON:
   },
   "isResolved": false,
   "isEscalated": false,
-  "stateChangeExplanation": "Brief explanation of how agent response affected state"
+  "stateChangeExplanation": "Detailed explanation of why customer emotional state changed based on agent's response"
 }`;
 
     const response = await ai.models.generateContent({
