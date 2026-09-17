@@ -1,936 +1,1247 @@
-import {
-  Scenario,
-  ChatMessage,
-  MessageAnalysis,
-  KnowledgeDocument,
-  PerformanceScore,
-  CoachingTimelineEvent,
-  DifficultyLevel,
-  UserAccount,
-  PolicyDocument,
-  PolicyStats,
-  UserRole,
-  PolicyAccessLevel,
-  AuditLogEntry
-} from '../types';
+// ============================================================
+// CUSTOMER SUPPORT ASSISTANT
+// FRONTEND API SERVICE
+// Backend: FastAPI @ http://localhost:3009
+// ============================================================
 
-/**
- * Dynamically resolved API Base URL.
- * In production deployments (e.g. Vercel + Render / Railway), VITE_API_URL or VITE_API_BASE_URL
- * can be configured in the environment. Defaults to relative '' for unified origin or rewrites.
- */
-export const API_BASE_URL: string = (
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-  ''
-).replace(/\/+$/, '');
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3009"
+).replace(/\/+$/, "");
+
+// ============================================================
+// STORAGE
+// ============================================================
+
+const TOKEN_KEY = "csa_auth_token";
+const USER_KEY = "csa_user";
+
+// ============================================================
+// TYPES
+// ============================================================
+
+export interface BackendUser {
+  user_id: number;
+  id?: string;
+  name: string;
+  email: string;
+  role: "admin" | "employee" | "customer" | string;
+  is_active?: boolean;
+  created_at?: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user_id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  user_id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+// ============================================================
+// CHAT
+// ============================================================
+
+export interface ChatMessage {
+  id?: number;
+  user_message?: string;
+  assistant_message?: string;
+  created_at?: string;
+}
+
+export interface ChatHistoryResponse {
+  session_id: string;
+  messages: ChatMessage[];
+}
+
+export interface ChatResponse {
+  session_id?: string;
+  user_message?: string;
+  assistant_message?: string;
+  answer?: string;
+  sources?: any[];
+  [key: string]: any;
+}
+
+// ============================================================
+// RAG
+// ============================================================
+
+export interface RAGSource {
+  chunk_id?: string;
+  text?: string;
+  metadata?: any;
+  distance?: number;
+  [key: string]: any;
+}
+
+export interface RAGResponse {
+  question: string;
+  answer: string;
+  sources: RAGSource[];
+}
+
+export interface SearchResult {
+  chunk_id: string;
+  text: string;
+  metadata: any;
+  distance: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: SearchResult[];
+}
+
+// ============================================================
+// SIMULATOR
+// ============================================================
+
+export interface SimulatorStartRequest {
+  session_label: string;
+  persona: string;
+  scenario: string;
+  initial_emotion: string;
+  issue_severity: number;
+  patience_level: number;
+  expected_resolution: string;
+}
+
+export interface SimulatorStartResponse {
+  session_id: number;
+  conversation_id: number;
+  customer_message: string;
+  state: any;
+  turn: number;
+  analysis?: any;
+}
+
+export interface SimulatorMessageRequest {
+  session_id: number;
+  agent_response: string;
+}
+
+export interface SimulatorMessageResponse {
+  session_id: number;
+  customer_message: string;
+  state: any;
+  turn: number;
+  is_resolved: boolean;
+  is_escalated: boolean;
+  analysis?: any;
+}
+
+export interface SimulatorHistoryMessage {
+  message_id: number;
+  sender_type: string;
+  message_text: string;
+  message_type: string;
+  timestamp: string;
+}
+
+export interface SimulatorHistoryResponse {
+  session_id: number;
+  status: string;
+  messages: SimulatorHistoryMessage[];
+}
+
+// ============================================================
+// ANALYSIS
+// ============================================================
+
+export interface AnalysisRequest {
+  session_id: number;
+  customer_message: string;
+}
+
+export interface AnalysisResponse {
+  [key: string]: any;
+}
+
+export interface AnalysisHistoryResponse {
+  [key: string]: any;
+}
+
+export interface AnalysisSummaryResponse {
+  [key: string]: any;
+}
+
+export interface DecisionSupportResponse {
+  [key: string]: any;
+}
+
+// ============================================================
+// DOCUMENTS
+// ============================================================
+
+export type DocumentType =
+  | "policy"
+  | "faq"
+  | "support";
+
+export interface Document {
+  document_id: number;
+  document_name: string;
+  document_type: DocumentType | string;
+  version: number;
+  status: string;
+  filename: string;
+  uploaded_by: string;
+}
+
+export interface DocumentsResponse {
+  total_documents: number;
+  documents: Document[];
+}
+
+export interface DocumentVersion {
+  document_id: number;
+  version: number;
+  status: string;
+  filename: string;
+  document_type: string;
+  uploaded_by: string;
+}
+
+export interface DocumentHistoryResponse {
+  document_name: string;
+  total_versions: number;
+  versions: DocumentVersion[];
+}
+
+// ============================================================
+// SUPPORT
+// ============================================================
+
+export interface SupportRequest {
+  issue_type: string;
+  message: string;
+}
+
+export interface SupportResponse {
+  status: string;
+  issue_type: string;
+  support_response: string;
+}
+
+// ============================================================
+// USERS
+// ============================================================
+
+export type ManagedUserRole =
+  | "admin"
+  | "employee";
+
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: ManagedUserRole;
+}
+
+export interface AdminUser {
+  user_id: number;
+  name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface AdminUsersResponse {
+  total_users: number;
+  users: AdminUser[];
+}
+
+// ============================================================
+// TOKEN
+// ============================================================
 
 export function getAuthToken(): string | null {
-  return localStorage.getItem('csa_auth_token');
+  return localStorage.getItem(TOKEN_KEY);
 }
 
-export function setAuthToken(token: string) {
-  localStorage.setItem('csa_auth_token', token);
+// ============================================================
+// STORED USER
+// ============================================================
+
+export function getStoredUser(): BackendUser | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+
+    if (!raw) {
+      return null;
+    }
+
+    return JSON.parse(raw) as BackendUser;
+  } catch {
+    return null;
+  }
 }
 
-export function clearAuthToken() {
-  localStorage.removeItem('csa_auth_token');
+// ============================================================
+// SAVE USER
+// ============================================================
+
+function saveUser(data: {
+  user_id: number;
+  name: string;
+  email: string;
+  role: string;
+  is_active?: boolean;
+}): BackendUser {
+  const user: BackendUser = {
+    user_id: data.user_id,
+    id: String(data.user_id),
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    is_active: data.is_active,
+  };
+
+  localStorage.setItem(
+    USER_KEY,
+    JSON.stringify(user)
+  );
+
+  return user;
 }
 
-function getAuthHeaders(customHeaders: Record<string, string> = {}) {
+// ============================================================
+// LOGOUT
+// ============================================================
+
+export function logoutApi(): void {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+}
+
+// ============================================================
+// HEADERS
+// ============================================================
+
+function getHeaders(
+  includeJson = true
+): HeadersInit {
   const token = getAuthToken();
-  const headers: Record<string, string> = { ...customHeaders };
+
+  const headers: Record<string, string> = {};
+
+  if (includeJson) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   return headers;
 }
 
-/**
- * Robust JSON request helper that safely handles HTML error pages,
- * network failures, and standardizes error messages without throwing JSON parse exceptions.
- */
-async function safeFetchJson<T = any>(
-  path: string,
-  init?: RequestInit,
-  fallbackError = 'Request failed'
-): Promise<T> {
-  const url =
-    path.startsWith('http://') || path.startsWith('https://')
-      ? path
-      : `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+// ============================================================
+// ERROR HANDLING
+// ============================================================
 
-  let res: Response;
-
+async function getErrorMessage(
+  response: Response
+): Promise<string> {
   try {
-    res = await fetch(url, init);
-  } catch (netErr: any) {
-    throw new Error(
-      'Unable to connect to the backend server. Please verify network connection and API URL.'
-    );
-  }
+    const data = await response.json();
 
-  const contentType = res.headers.get('content-type') || '';
-
-  if (!res.ok) {
-    if (contentType.includes('application/json')) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || errorData.error || fallbackError);
+    if (typeof data?.detail === "string") {
+      return data.detail;
     }
 
-    throw new Error(
-      `Authentication server error (${res.status}): The API service is currently unavailable.`
-    );
-  }
+    if (typeof data?.message === "string") {
+      return data.message;
+    }
 
-  if (contentType.includes('application/json')) {
-    return await res.json();
-  }
+    if (typeof data?.error === "string") {
+      return data.error;
+    }
 
-  const rawText = await res.text();
+    if (Array.isArray(data?.detail)) {
+      return data.detail
+        .map(
+          (item: any) =>
+            item?.msg ||
+            item?.message ||
+            "Validation error"
+        )
+        .join(", ");
+    }
 
-  if (rawText.trim().startsWith('<')) {
-    throw new Error(
-      'Authentication server returned an unexpected HTML response instead of JSON. Please verify backend API routing.'
-    );
-  }
-
-  try {
-    return JSON.parse(rawText);
+    return `API Error: ${response.status}`;
   } catch {
-    throw new Error('Invalid JSON response format received from server.');
+    return `API Error: ${response.status}`;
   }
 }
 
-export async function analyzeTurnApi(params: {
-  customerMessage: string;
-  conversationHistory: ChatMessage[];
-  scenario: Scenario;
-  lastAgentMessage?: string;
-  knowledgeDocs?: KnowledgeDocument[];
-}): Promise<MessageAnalysis> {
+// ============================================================
+// GENERIC API FETCH
+// ============================================================
+
+async function apiFetch<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  console.log(
+    `[CSA API] ${options.method || "GET"} ${url}`
+  );
+
+  let response: Response;
+
   try {
-    return await safeFetchJson<MessageAnalysis>('/api/analyze-turn', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
+    response = await fetch(url, {
+      ...options,
+      headers: {
+        ...getHeaders(
+          options.body !== undefined
+        ),
+        ...(options.headers || {}),
+      },
     });
-  } catch (err) {
-    console.warn('Fallback analysis due to:', err);
+  } catch (error) {
+    console.error(
+      "[CSA API] Backend connection error:",
+      error
+    );
 
-    return {
-      intent:
-        params.scenario?.category === 'Billing'
-          ? 'Billing Dispute & Reversal'
-          : 'Customer Issue Resolution',
-
-      intentConfidence: 92,
-
-      sentiment: 'negative',
-      sentimentConfidence: 86,
-
-      frustrationLevel: 68,
-      frustrationTrend: 'increasing',
-
-      emotions: ['Frustration', 'Urgency'],
-
-      relevantKnowledge: {
-        kbId: 'KB-102',
-        title: 'Duplicate Subscription Charges & Billing Disputes',
-        relevantSection: 'Section 3.2: Duplicate Charge Reversal',
-        policySnippet:
-          'Verify transaction timestamps and issue immediate full credit. Inform customer: Funds reappear within 3-5 business days.',
-        source: 'Refund Policy → Section 3.2',
-        confidence: 94,
-
-        troubleshootingSteps: [
-          'Verify transaction timestamps in billing logs',
-          'Confirm duplicate descriptor and charge amount',
-          'Authorize instant refund reversal',
-          'Clarify 3-5 business days banking turnaround'
-        ],
-
-        isVerified: true
-      },
-
-      escalationRisk: 65,
-      escalationLevel: 'high',
-
-      riskReasons: [
-        'Customer expressed immediate financial frustration',
-        'Customer stated previous contact was delayed',
-        'High urgency tone detected'
-      ],
-
-      recommendedIntervention:
-        'Acknowledge the customer frustration sincerely, clarify that you will handle it personally, and state the exact 3-5 business day refund policy.',
-
-      coachWhisper:
-        '💡 Validate their frustration and take personal ownership before detailing the policy steps.',
-
-      alertType: 'warning',
-
-      suggestedResponses: {
-        quick:
-          "I'm so sorry about the duplicate charge and prior delay. I've initiated your refund right away.",
-
-        professional:
-          'I apologize for the duplicate charge and the delay in our earlier response. I have verified your account records and initiated an immediate reversal, which will process in 3-5 business days.',
-
-        empathetic:
-          "I completely understand how frustrating it is to see unexpected duplicate charges. I am on it right now—I've verified the error and authorized your full refund immediately.",
-
-        concise:
-          "Apologies for the duplicate charge. I've processed your full refund, which will reflect in 3-5 business days.",
-
-        detailed:
-          'Thank you for alerting us. I checked our payment gateway logs and verified the duplicate billing. I have issued a full reversal to your card, and you will receive a receipt confirmation shortly. Funds typically reappear in 3-5 business days.',
-
-        deEscalation:
-          "I am genuinely sorry for the stress and delay you experienced. You will not have to dispute anything with your bank—I've authorized your refund right now and confirmed your account is in good standing."
-      },
-
-      whyReasons: [
-        'Acknowledging the emotional impact de-escalates customer anxiety by 40%',
-        'Adheres directly to KB-102 refund reversal guidelines',
-        'Clear timeline sets realistic banking expectations'
-      ],
-
-      counterfactual: {
-        alternativeResponse:
-          'You have to wait 5 business days for our billing department to review this.',
-
-        predictedRiskDrop: -30,
-
-        reasoning:
-          'A dismissive response would escalate frustration to 90% and trigger a supervisor demand.'
-      },
-
-      agentEvaluation: params.lastAgentMessage
-        ? {
-            tone: 'Empathetic',
-            empathyScore: 86,
-            clarityScore: 92,
-            concisenessScore: 88,
-            grammarScore: 96,
-            policyComplianceScore: 94,
-            problemNoticed:
-              'Good tone; ensure you clearly specify the 3-5 day banking window.',
-            coachingAdvice:
-              'Excellent empathy. Make sure to share the refund confirmation receipt.'
-          }
-        : undefined
-    };
+    throw new Error(
+      `Cannot connect to backend at ${API_BASE_URL}. Make sure FastAPI is running on port 3009.`
+    );
   }
-}
 
-export async function simulateCustomerTurnApi(params: {
-  scenario: Scenario;
-  conversationHistory: ChatMessage[];
-  agentResponse: string;
-  currentCustomerState?: {
-    frustration: number;
-    trust: number;
-    patience: number;
-    satisfaction: number;
-    escalationIntent: number;
-  };
-}): Promise<{
-  nextCustomerMessage: string;
-  updatedCustomerState: {
-    frustration: number;
-    trust: number;
-    patience: number;
-    satisfaction: number;
-    escalationIntent: number;
-  };
-  isResolved: boolean;
-  isEscalated: boolean;
-  stateChangeExplanation?: string;
-}> {
-  try {
-    return await safeFetchJson('/api/simulate-customer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
-  } catch (err) {
-    console.warn('Fallback customer simulation due to:', err);
+  if (!response.ok) {
+    const message =
+      await getErrorMessage(response);
 
-    const text = (params.agentResponse || '').toLowerCase();
-
-    const isEmpathetic =
-      text.includes('sorry') ||
-      text.includes('understand') ||
-      text.includes('apologize') ||
-      text.includes('refund') ||
-      text.includes('credit');
-
-    const prev = params.currentCustomerState || {
-      frustration: 70,
-      trust: 35,
-      patience: 30,
-      satisfaction: 25,
-      escalationIntent: 60
-    };
-
-    const newFrustration = Math.max(
-      10,
-      Math.min(100, prev.frustration + (isEmpathetic ? -25 : 15))
-    );
-
-    const newTrust = Math.max(
-      10,
-      Math.min(100, prev.trust + (isEmpathetic ? 25 : -10))
-    );
-
-    const newSat = Math.max(
-      10,
-      Math.min(100, prev.satisfaction + (isEmpathetic ? 30 : -10))
-    );
-
-    const newEscalation = Math.max(
-      0,
-      Math.min(100, prev.escalationIntent - (isEmpathetic ? 30 : -15))
-    );
-
-    const isResolved = newFrustration <= 25 && newSat >= 65;
-    const isEscalated = newEscalation >= 85;
-
-    let nextCustomerMessage =
-      'Thank you for explaining that. Will I get a confirmation email with the transaction receipt?';
-
-    if (isResolved) {
-      nextCustomerMessage =
-        'Thank you so much! That solves my problem completely. I really appreciate your quick help and understanding.';
-    } else if (isEscalated) {
-      nextCustomerMessage =
-        'This is unacceptable. Please transfer me to your supervisor or manager right now.';
+    if (response.status === 401) {
+      logoutApi();
     }
 
-    return {
-      nextCustomerMessage,
-
-      updatedCustomerState: {
-        frustration: newFrustration,
-        trust: newTrust,
-
-        patience: Math.max(
-          5,
-          Math.min(100, prev.patience + (isEmpathetic ? 15 : -10))
-        ),
-
-        satisfaction: newSat,
-        escalationIntent: newEscalation
-      },
-
-      isResolved,
-      isEscalated,
-
-      stateChangeExplanation: isEmpathetic
-        ? 'Agent responded with warm empathy and clear solution: Frustration dropped -25%, Trust +25%.'
-        : 'Agent response lacked sufficient de-escalation: Frustration increased.'
-    };
+    throw new Error(message);
   }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const contentType =
+    response.headers.get("content-type");
+
+  if (
+    !contentType?.includes(
+      "application/json"
+    )
+  ) {
+    return (await response.text()) as T;
+  }
+
+  return response.json();
 }
 
-export async function generateScenarioApi(params: {
-  prompt: string;
-  category: string;
-  difficulty: DifficultyLevel;
-}): Promise<Scenario> {
+// ============================================================
+// BACKEND CONNECTION
+// ============================================================
+
+export async function testBackendConnectionApi(): Promise<boolean> {
   try {
-    return await safeFetchJson<Scenario>('/api/generate-scenario', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
-  } catch (err) {
-    console.warn('Fallback scenario generator due to:', err);
+    const response = await fetch(
+      `${API_BASE_URL}/docs`
+    );
 
-    return {
-      id: `SCENARIO-${Date.now().toString().slice(-4)}`,
-
-      title: `${params.category}: ${
-        params.prompt || 'Customer Service Dispute'
-      }`,
-
-      category: params.category as any,
-
-      difficulty: params.difficulty,
-
-      customerPersona: {
-        id: `persona-${Date.now()}`,
-
-        name: 'Jordan Miller',
-
-        avatar:
-          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-
-        type:
-          params.difficulty === 'expert'
-            ? 'Angry'
-            : 'Highly frustrated',
-
-        behaviorDescription:
-          'Needs urgent resolution regarding an unexpected billing or service interruption.',
-
-        baseFrustration: 75,
-        patience: 25,
-        trust: 30,
-        satisfaction: 20,
-        escalationIntent: 65
-      },
-
-      initialProblem:
-        params.prompt ||
-        'Customer encountered a service interruption and unexpected billing fee.',
-
-      customerOpeningMessage:
-        `Hi, I am having a severe issue with ${
-          params.prompt || 'my account'
-        }. I need this taken care of right away without any delays!`,
-
-      expectedResolution:
-        'Apologize sincerely, review KB policy, process appropriate correction or credit, and reassure timelines.',
-
-      escalationTrigger:
-        'Refusing accountability or providing generic robotic policy replies.',
-
-      successCriteria: [
-        'Acknowledge customer emotions immediately',
-        'Apply verified Knowledge Base policy',
-        'Deliver clear step-by-step resolution',
-        'Prevent supervisor escalation'
-      ],
-
-      sessionObjectives:
-        `Resolve the customer complaint regarding ${
-          params.prompt || 'the service'
-        } within 3-4 conversation turns.`,
-
-      relevantKbIds: ['KB-101', 'KB-102'],
-
-      targetResolutionTurns: 4
-    };
+    return response.ok;
+  } catch {
+    return false;
   }
 }
 
-export async function generateReportApi(params: {
-  scenario: Scenario;
-  messages: ChatMessage[];
-  durationSeconds: number;
-  coachingLevel: string;
-}): Promise<{
-  score: PerformanceScore;
-  startingSentiment: any;
-  endingSentiment: any;
-  sentimentImprovement: number;
-  resolved: boolean;
-  escalated: boolean;
-  timelineEvents: CoachingTimelineEvent[];
-  topStrengths: string[];
-  topWeaknesses: string[];
-  recommendedTrainings: string[];
-  xpEarned: number;
-  responseComparisons: {
-    turnNumber: number;
-    originalAgentText: string;
-    aiImprovedText: string;
-    improvementExplanation: string;
-  }[];
-}> {
-  try {
-    return await safeFetchJson('/api/generate-report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
-  } catch (err) {
-    console.warn('Fallback report generator due to:', err);
+// ============================================================
+// AUTH - REGISTER
+// ============================================================
 
-    return {
-      score: {
-        overall: 89,
-        intentHandling: 93,
-        knowledgeUsage: 91,
-        empathy: 87,
-        tone: 91,
-        clarity: 94,
-        resolution: 90,
-        escalationHandling: 85,
-        policyCompliance: 96,
-
-        resolutionQuality: {
-          problemIdentification: 95,
-          correctSolution: 92,
-          knowledgeAccuracy: 94,
-          customerSatisfaction: 88,
-          resolutionCompleteness: 90,
-          overallQuality: 92
-        }
-      },
-
-      startingSentiment: 'very_negative',
-      endingSentiment: 'positive',
-      sentimentImprovement: 68,
-
-      resolved: true,
-      escalated: false,
-
-      timelineEvents: [
-        {
-          turn: 1,
-          timestamp: '00:15',
-          type: 'sentiment_shift',
-          description:
-            'Customer entered with 75% frustration on billing discrepancy.',
-          severity: 'warning'
-        },
-
-        {
-          turn: 1,
-          timestamp: '00:30',
-          type: 'kb_retrieved',
-          description:
-            'KB-102 Duplicate Subscription Charges automatically retrieved with 94% relevance match.',
-          severity: 'normal'
-        },
-
-        {
-          turn: 2,
-          timestamp: '01:10',
-          type: 'empathy_bonus',
-          description:
-            'Agent warmly acknowledged prior email ticket delay, dropping frustration by 35%.',
-          severity: 'positive'
-        },
-
-        {
-          turn: 3,
-          timestamp: '02:00',
-          type: 'resolution_milestone',
-          description:
-            'Full refund authorized and receipt issued; customer confirmed resolution.',
-          severity: 'positive'
-        }
-      ],
-
-      topStrengths: [
-        'High empathy and active listening during customer escalation peak',
-        'Accurate citation of KB-102 refund reversal guidelines',
-        'Proactive ownership and clear 3-5 business day timeline delivery'
-      ],
-
-      topWeaknesses: [
-        'Could have proactively offered confirmation receipt ID earlier in the interaction'
-      ],
-
-      recommendedTrainings: [
-        'Handling High-Value Customer Billing Disputes',
-        'Advanced De-escalation & Retention Techniques'
-      ],
-
-      xpEarned: 240,
-
-      responseComparisons: params.messages
-        .filter((m) => m.sender === 'agent')
-        .slice(0, 2)
-        .map((m, idx) => ({
-          turnNumber: idx + 1,
-
-          originalAgentText: m.text,
-
-          aiImprovedText:
-            'I completely understand why this duplicate charge is frustrating, and I apologize for the delay in our earlier response. I have verified the transaction error and authorized your full refund immediately.',
-
-          improvementExplanation:
-            "Directly validates the customer's prior negative experience and shows immediate resolution ownership."
-        }))
-    };
+export async function registerApi(
+  name: string,
+  email: string,
+  password: string
+): Promise<RegisterResponse> {
+  if (!name.trim()) {
+    throw new Error("Name is required.");
   }
+
+  if (!email.trim()) {
+    throw new Error("Email is required.");
+  }
+
+  if (!password) {
+    throw new Error("Password is required.");
+  }
+
+  return apiFetch<RegisterResponse>(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      }),
+    }
+  );
 }
 
-export async function counterfactualApi(params: {
-  scenario: Scenario;
-  customerMessage: string;
-  customAgentResponse: string;
-}): Promise<{
-  predictedCustomerReaction: string;
-  predictedFrustrationDelta: number;
-  predictedEscalationRisk: number;
-  reasoning: string;
-}> {
-  try {
-    return await safeFetchJson('/api/counterfactual', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
-  } catch (err) {
-    return {
-      predictedCustomerReaction:
-        'Thank you for looking into this so quickly! That puts my mind at ease.',
-
-      predictedFrustrationDelta: -30,
-
-      predictedEscalationRisk: 25,
-
-      reasoning:
-        'Your response explicitly addressed customer frustration and gave a concrete timeline.'
-    };
-  }
-}
-
-export async function translateApi(
-  text: string,
-  targetLang: string
-): Promise<{
-  translatedText: string;
-  detectedLang: string;
-  intent: string;
-}> {
-  try {
-    return await safeFetchJson('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, targetLang })
-    });
-  } catch (err) {
-    return {
-      translatedText: text,
-      detectedLang: 'English',
-      intent: 'Customer Inquiry'
-    };
-  }
-}
-
-/* ==========================================================================
-   FRONTEND-ONLY DEMO AUTHENTICATION
-   ========================================================================== */
-
-const DEMO_USERS: Array<{
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
-}> = [
-  {
-    id: 'usr-admin-1',
-    name: 'System Administrator',
-    email: 'admin@example.com',
-    password: 'Admin123!',
-    role: 'admin'
-  },
-  {
-    id: 'usr-trainer-1',
-    name: 'Training Manager',
-    email: 'trainer@example.com',
-    password: 'Trainer123!',
-    role: 'trainer'
-  },
-  {
-    id: 'usr-employee-1',
-    name: 'Customer Support Employee',
-    email: 'employee@example.com',
-    password: 'Employee123!',
-    role: 'employee'
-  }
-];
+// ============================================================
+// AUTH - LOGIN
+// ============================================================
 
 export async function loginApi(
   email: string,
   password: string
 ): Promise<{
   token: string;
-  user: UserAccount;
-  success?: boolean;
+  user: BackendUser;
 }> {
-  const demoUser = DEMO_USERS.find(
-    (user) =>
-      user.email.toLowerCase() === email.trim().toLowerCase() &&
-      user.password === password
-  );
-
-  if (!demoUser) {
-    throw new Error('Invalid email or password.');
+  if (!email.trim()) {
+    throw new Error("Email is required.");
   }
 
-  const user: UserAccount = {
-    id: demoUser.id,
-    name: demoUser.name,
-    email: demoUser.email,
-    role: demoUser.role,
-    status: 'active',
-    createdAt: new Date().toISOString(),
-    lastLogin: new Date().toISOString()
-  };
+  if (!password) {
+    throw new Error("Password is required.");
+  }
 
-  const token = `demo-token-${demoUser.role}`;
+  const data =
+    await apiFetch<LoginResponse>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      }
+    );
 
-  localStorage.setItem('csa_auth_token', token);
-  localStorage.setItem('csa_demo_user', JSON.stringify(user));
+  localStorage.setItem(
+    TOKEN_KEY,
+    data.access_token
+  );
+
+  const user = saveUser({
+    user_id: data.user_id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+  });
 
   return {
-    token,
+    token: data.access_token,
     user,
-    success: true
   };
 }
 
-export async function fetchCurrentUserApi(): Promise<UserAccount | null> {
+// ============================================================
+// AUTH - CURRENT USER
+// ============================================================
+
+export async function fetchCurrentUserApi(): Promise<BackendUser | null> {
+  const token = getAuthToken();
+
+  if (!token) {
+    return null;
+  }
+
   try {
-    const storedUser = localStorage.getItem('csa_demo_user');
+    const data =
+      await apiFetch<{
+        user_id: number;
+        name: string;
+        email: string;
+        role: string;
+        is_active?: boolean;
+        created_at?: string;
+      }>("/auth/me");
 
-    if (!storedUser) {
-      return null;
-    }
-
-    return JSON.parse(storedUser) as UserAccount;
+    return saveUser(data);
   } catch {
-    localStorage.removeItem('csa_demo_user');
-    localStorage.removeItem('csa_auth_token');
-
+    logoutApi();
     return null;
   }
 }
 
-export async function logoutApi(): Promise<void> {
-  localStorage.removeItem('csa_demo_user');
-  localStorage.removeItem('csa_auth_token');
-}
-
-/* ==========================================================================
-   ADMIN USER MANAGEMENT API CALLS
-   ========================================================================== */
-
-export async function fetchUsersApi(): Promise<UserAccount[]> {
-  return await safeFetchJson<UserAccount[]>(
-    '/api/admin/users',
-    {
-      headers: getAuthHeaders()
-    },
-    'Failed to fetch user directory.'
-  );
-}
-
-export async function createUserApi(user: {
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
-}): Promise<UserAccount> {
-  const data = await safeFetchJson<{ user: UserAccount }>(
-    '/api/admin/users',
-    {
-      method: 'POST',
-      headers: getAuthHeaders({
-        'Content-Type': 'application/json'
-      }),
-      body: JSON.stringify(user)
-    },
-    'Failed to create user.'
-  );
-
-  return data.user;
-}
-
-export async function updateUserApi(
-  id: string,
-  updates: {
-    name?: string;
-    role?: UserRole;
-    status?: 'active' | 'inactive';
-    password?: string;
-  }
-): Promise<UserAccount> {
-  const data = await safeFetchJson<{ user: UserAccount }>(
-    `/api/admin/users/${id}`,
-    {
-      method: 'PUT',
-      headers: getAuthHeaders({
-        'Content-Type': 'application/json'
-      }),
-      body: JSON.stringify(updates)
-    },
-    'Failed to update user.'
-  );
-
-  return data.user;
-}
-
-export async function deleteUserApi(id: string): Promise<void> {
-  await safeFetchJson(
-    `/api/admin/users/${id}`,
-    {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    },
-    'Failed to delete user.'
-  );
-}
-
-/* ==========================================================================
-   POLICY MANAGEMENT & RAG API CALLS
-   ========================================================================== */
-
-export async function uploadPoliciesApi(
-  files: FileList | File[],
-  category: string,
-  accessLevel: PolicyAccessLevel
-): Promise<PolicyDocument[]> {
-  const formData = new FormData();
-
-  for (let i = 0; i < files.length; i++) {
-    formData.append('files', files[i]);
-  }
-
-  formData.append('category', category);
-  formData.append('accessLevel', accessLevel);
-
-  const data = await safeFetchJson<{
-    policies: PolicyDocument[];
-  }>(
-    '/api/admin/policies/upload',
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: formData
-    },
-    'Failed to upload policy documents.'
-  );
-
-  return data.policies;
-}
-
-export async function fetchAdminPoliciesApi(): Promise<
-  PolicyDocument[]
-> {
-  return await safeFetchJson<PolicyDocument[]>(
-    '/api/admin/policies',
-    {
-      headers: getAuthHeaders()
-    },
-    'Failed to fetch policy library.'
-  );
-}
-
-export async function fetchUserPoliciesApi(): Promise<
-  PolicyDocument[]
-> {
-  return await safeFetchJson<PolicyDocument[]>(
-    '/api/policies',
-    {
-      headers: getAuthHeaders()
-    },
-    'Failed to fetch accessible policy library.'
-  );
-}
-
-export async function updatePolicyApi(
-  id: string,
-  updates: {
-    category?: string;
-    accessLevel?: PolicyAccessLevel;
-    status?: string;
-    version?: number;
-    isActive?: boolean;
-  }
-): Promise<PolicyDocument> {
-  const data = await safeFetchJson<{
-    policy: PolicyDocument;
-  }>(
-    `/api/admin/policies/${id}`,
-    {
-      method: 'PUT',
-      headers: getAuthHeaders({
-        'Content-Type': 'application/json'
-      }),
-      body: JSON.stringify(updates)
-    },
-    'Failed to update policy document.'
-  );
-
-  return data.policy;
-}
-
-export async function fetchPolicyStatsApi(): Promise<PolicyStats> {
-  return await safeFetchJson<PolicyStats>(
-    '/api/admin/policies/stats',
-    {
-      headers: getAuthHeaders()
-    },
-    'Failed to fetch policy statistics.'
-  );
-}
-
-export async function deletePolicyApi(id: string): Promise<void> {
-  await safeFetchJson(
-    `/api/admin/policies/${id}`,
-    {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    },
-    'Failed to delete policy document.'
-  );
-}
-
-export async function reprocessPolicyApi(
-  id: string
-): Promise<PolicyDocument> {
-  const data = await safeFetchJson<{
-    policy: PolicyDocument;
-  }>(
-    `/api/admin/policies/${id}/reprocess`,
-    {
-      method: 'POST',
-      headers: getAuthHeaders()
-    },
-    'Failed to reprocess policy document.'
-  );
-
-  return data.policy;
-}
+// ============================================================
+// POLICY AI ASSISTANT
+// IMPORTANT:
+// Uses /rag/ask instead of /chat/message.
+// /chat/message currently returns HTTP 422.
+// ============================================================
 
 export async function askAssistantApi(
   message: string,
-  history: ChatMessage[] = []
-): Promise<{
-  answer: string;
-  sources: {
-    documentTitle: string;
-    sectionTitle?: string;
-    pageNumber?: number;
-    accessLevel: string;
-  }[];
-}> {
-  return await safeFetchJson(
-    '/api/assistant/chat',
-    {
-      method: 'POST',
-      headers: getAuthHeaders({
-        'Content-Type': 'application/json'
-      }),
-      body: JSON.stringify({
-        message,
-        history
-      })
-    },
-    'AI Assistant service unavailable.'
+  sessionId?: string
+): Promise<ChatResponse> {
+  if (!message.trim()) {
+    throw new Error(
+      "Message cannot be empty."
+    );
+  }
+
+  const finalSessionId =
+    sessionId ||
+    `chat-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+
+  console.log(
+    "[CSA RAG] Asking:",
+    message.trim()
+  );
+
+  const ragResponse =
+    await apiFetch<RAGResponse>(
+      "/rag/ask",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          question: message.trim(),
+          number_of_results: 3,
+        }),
+      }
+    );
+
+  console.log(
+    "[CSA RAG] Response:",
+    ragResponse
+  );
+
+  return {
+    session_id: finalSessionId,
+    user_message: message.trim(),
+    assistant_message:
+      ragResponse.answer,
+    answer: ragResponse.answer,
+    sources:
+      ragResponse.sources || [],
+  };
+}
+
+// ============================================================
+// CHAT HISTORY
+// ============================================================
+
+export async function getChatHistoryApi(
+  sessionId: string
+): Promise<ChatHistoryResponse> {
+  if (!sessionId.trim()) {
+    throw new Error(
+      "Chat session ID is required."
+    );
+  }
+
+  return apiFetch<ChatHistoryResponse>(
+    `/chat/${encodeURIComponent(
+      sessionId
+    )}/history`
   );
 }
 
-export async function fetchAuditLogsApi(): Promise<
-  AuditLogEntry[]
-> {
-  return await safeFetchJson<AuditLogEntry[]>(
-    '/api/admin/audit-logs',
+// ============================================================
+// RAG DIRECT
+// ============================================================
+
+export async function askRAGApi(
+  question: string,
+  numberOfResults = 3
+): Promise<RAGResponse> {
+  if (!question.trim()) {
+    throw new Error(
+      "Question cannot be empty."
+    );
+  }
+
+  return apiFetch<RAGResponse>(
+    "/rag/ask",
     {
-      headers: getAuthHeaders()
-    },
-    'Failed to fetch audit activity logs.'
+      method: "POST",
+      body: JSON.stringify({
+        question: question.trim(),
+        number_of_results:
+          numberOfResults,
+      }),
+    }
   );
 }
+
+// ============================================================
+// SEMANTIC SEARCH
+// ============================================================
+
+export async function semanticSearchApi(
+  query: string,
+  numberOfResults = 3
+): Promise<SearchResponse> {
+  if (!query.trim()) {
+    throw new Error(
+      "Search query cannot be empty."
+    );
+  }
+
+  return apiFetch<SearchResponse>(
+    "/search/",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        query: query.trim(),
+        number_of_results:
+          numberOfResults,
+      }),
+    }
+  );
+}
+
+// ============================================================
+// SIMULATOR - START
+// ============================================================
+
+export async function startSimulatorApi(
+  request: SimulatorStartRequest
+): Promise<SimulatorStartResponse> {
+  if (!request.session_label?.trim()) {
+    throw new Error(
+      "Session label is required."
+    );
+  }
+
+  if (!request.persona?.trim()) {
+    throw new Error(
+      "Customer persona is required."
+    );
+  }
+
+  if (!request.scenario?.trim()) {
+    throw new Error(
+      "Scenario is required."
+    );
+  }
+
+  return apiFetch<SimulatorStartResponse>(
+    "/simulator/start",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        session_label:
+          request.session_label,
+        persona:
+          request.persona,
+        scenario:
+          request.scenario,
+        initial_emotion:
+          request.initial_emotion,
+        issue_severity:
+          request.issue_severity,
+        patience_level:
+          request.patience_level,
+        expected_resolution:
+          request.expected_resolution,
+      }),
+    }
+  );
+}
+
+// ============================================================
+// SIMULATOR - SEND AGENT RESPONSE
+// ============================================================
+
+export async function sendSimulatorMessageApi(
+  sessionId: number,
+  agentResponse: string
+): Promise<SimulatorMessageResponse> {
+  if (!sessionId) {
+    throw new Error(
+      "A valid simulator session ID is required."
+    );
+  }
+
+  if (!agentResponse.trim()) {
+    throw new Error(
+      "Agent response cannot be empty."
+    );
+  }
+
+  return apiFetch<SimulatorMessageResponse>(
+    "/simulator/message",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: sessionId,
+        agent_response:
+          agentResponse.trim(),
+      }),
+    }
+  );
+}
+
+// ============================================================
+// SIMULATOR - HISTORY
+// ============================================================
+
+export async function getSimulatorHistoryApi(
+  sessionId: number
+): Promise<SimulatorHistoryResponse> {
+  if (!sessionId) {
+    throw new Error(
+      "A valid simulator session ID is required."
+    );
+  }
+
+  return apiFetch<SimulatorHistoryResponse>(
+    `/simulator/${sessionId}/history`
+  );
+}
+
+// ============================================================
+// ANALYSIS
+// ============================================================
+
+export async function analyzeCustomerMessageApi(
+  sessionId: number,
+  customerMessage: string
+): Promise<AnalysisResponse> {
+  if (!sessionId) {
+    throw new Error(
+      "A valid session ID is required."
+    );
+  }
+
+  if (!customerMessage?.trim()) {
+    throw new Error(
+      "Customer message cannot be empty."
+    );
+  }
+
+  return apiFetch<AnalysisResponse>(
+    "/analysis/analyze",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: sessionId,
+        customer_message:
+          customerMessage.trim(),
+      }),
+    }
+  );
+}
+
+// ============================================================
+// ANALYSIS HISTORY
+// ============================================================
+
+export async function getAnalysisHistoryApi(
+  sessionId: number
+): Promise<any> {
+  if (!sessionId) {
+    throw new Error(
+      "A valid session ID is required."
+    );
+  }
+
+  return apiFetch<any>(
+    `/analysis/${sessionId}/history`
+  );
+}
+
+// ============================================================
+// ANALYSIS SUMMARY
+// ============================================================
+
+export async function getAnalysisSummaryApi(
+  sessionId: number
+): Promise<AnalysisSummaryResponse> {
+  if (!sessionId) {
+    throw new Error(
+      "A valid session ID is required."
+    );
+  }
+
+  return apiFetch<AnalysisSummaryResponse>(
+    `/analysis/${sessionId}/summary`
+  );
+}
+
+// ============================================================
+// ANALYSIS METRICS
+// ============================================================
+
+export async function getAnalysisMetricsApi(): Promise<any> {
+  return apiFetch<any>(
+    "/analysis/metrics"
+  );
+}
+
+// ============================================================
+// DECISION SUPPORT - GET
+// ============================================================
+
+export async function getDecisionSupportApi(
+  sessionId: number
+): Promise<DecisionSupportResponse> {
+  if (!sessionId) {
+    throw new Error(
+      "A valid session ID is required."
+    );
+  }
+
+  return apiFetch<DecisionSupportResponse>(
+    `/analysis/${sessionId}/decision-support`
+  );
+}
+
+// ============================================================
+// DECISION SUPPORT - CREATE
+// ============================================================
+
+export async function createDecisionSupportApi(
+  sessionId: number
+): Promise<DecisionSupportResponse> {
+  if (!sessionId) {
+    throw new Error(
+      "A valid session ID is required."
+    );
+  }
+
+  return apiFetch<DecisionSupportResponse>(
+    `/analysis/${sessionId}/decision-support`,
+    {
+      method: "POST",
+    }
+  );
+}
+
+// ============================================================
+// DOCUMENTS
+// ============================================================
+
+export async function fetchDocumentsApi(): Promise<DocumentsResponse> {
+  return apiFetch<DocumentsResponse>(
+    "/documents/"
+  );
+}
+
+// ============================================================
+// ADMIN POLICIES
+// ============================================================
+
+export async function fetchAdminPoliciesApi(): Promise<DocumentsResponse> {
+  return fetchDocumentsApi();
+}
+
+// ============================================================
+// DOCUMENT HISTORY
+// ============================================================
+
+export async function getDocumentHistoryApi(
+  documentName: string
+): Promise<DocumentHistoryResponse> {
+  if (!documentName.trim()) {
+    throw new Error(
+      "Document name is required."
+    );
+  }
+
+  return apiFetch<DocumentHistoryResponse>(
+    `/documents/history/${encodeURIComponent(
+      documentName
+    )}`
+  );
+}
+
+// ============================================================
+// UPLOAD DOCUMENT
+// ============================================================
+
+export async function uploadDocumentApi(
+  file: File,
+  documentName: string,
+  documentType: DocumentType
+): Promise<any> {
+  if (!file) {
+    throw new Error(
+      "PDF file is required."
+    );
+  }
+
+  if (
+    file.type !== "application/pdf" &&
+    !file.name
+      .toLowerCase()
+      .endsWith(".pdf")
+  ) {
+    throw new Error(
+      "Only PDF files are allowed."
+    );
+  }
+
+  if (!documentName.trim()) {
+    throw new Error(
+      "Document name cannot be empty."
+    );
+  }
+
+  const token = getAuthToken();
+
+  const formData = new FormData();
+
+  formData.append(
+    "file",
+    file
+  );
+
+  formData.append(
+    "document_name",
+    documentName.trim()
+  );
+
+  formData.append(
+    "document_type",
+    documentType
+  );
+
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/documents/upload`,
+      {
+        method: "POST",
+        headers: {
+          ...(token
+            ? {
+                Authorization:
+                  `Bearer ${token}`,
+              }
+            : {}),
+        },
+        body: formData,
+      }
+    );
+  } catch {
+    throw new Error(
+      `Cannot connect to backend at ${API_BASE_URL}.`
+    );
+  }
+
+  if (!response.ok) {
+    const message =
+      await getErrorMessage(
+        response
+      );
+
+    if (response.status === 401) {
+      logoutApi();
+    }
+
+    throw new Error(message);
+  }
+
+  return response.json();
+}
+
+// ============================================================
+// SUPPORT
+// ============================================================
+
+export async function submitSupportRequestApi(
+  issueType: string,
+  message: string
+): Promise<SupportResponse> {
+  if (!issueType.trim()) {
+    throw new Error(
+      "Issue type is required."
+    );
+  }
+
+  if (!message.trim()) {
+    throw new Error(
+      "Support message cannot be empty."
+    );
+  }
+
+  return apiFetch<SupportResponse>(
+    "/support/",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        issue_type:
+          issueType.trim(),
+        message:
+          message.trim(),
+      }),
+    }
+  );
+}
+
+// ============================================================
+// USERS - LIST
+// ============================================================
+
+export async function fetchAdminUsersApi(): Promise<AdminUsersResponse> {
+  return apiFetch<AdminUsersResponse>(
+    "/users/"
+  );
+}
+
+export async function fetchUsersApi(): Promise<AdminUsersResponse> {
+  return fetchAdminUsersApi();
+}
+
+// ============================================================
+// USERS - CREATE
+// ============================================================
+
+export async function createUserApi(
+  request: CreateUserRequest
+): Promise<any> {
+  if (!request.name.trim()) {
+    throw new Error(
+      "Name is required."
+    );
+  }
+
+  if (!request.email.trim()) {
+    throw new Error(
+      "Email is required."
+    );
+  }
+
+  if (!request.password) {
+    throw new Error(
+      "Password is required."
+    );
+  }
+
+  return apiFetch<any>(
+    "/users/",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name:
+          request.name.trim(),
+        email:
+          request.email.trim(),
+        password:
+          request.password,
+        role:
+          request.role,
+      }),
+    }
+  );
+}
+
+// ============================================================
+// REPORT DATA
+// ============================================================
+
+export async function getSessionReportDataApi(
+  sessionId: number
+) {
+  if (!sessionId) {
+    throw new Error(
+      "A valid session ID is required."
+    );
+  }
+
+  const [
+    summary,
+    history,
+    decisionSupport,
+  ] = await Promise.all([
+    getAnalysisSummaryApi(
+      sessionId
+    ),
+    getAnalysisHistoryApi(
+      sessionId
+    ),
+    getDecisionSupportApi(
+      sessionId
+    ),
+  ]);
+
+  return {
+    summary,
+    history,
+    decisionSupport,
+  };
+}
+
+// ============================================================
+// AUDIT LOGS - BACKWARD COMPATIBILITY
+// ============================================================
+
+export async function fetchAuditLogsApi(): Promise<any[]> {
+  console.warn(
+    "[CSA API] Audit log endpoint is not currently exposed by the backend."
+  );
+
+  return [];
+}
+
+// ============================================================
+// USER MANAGEMENT - BACKWARD COMPATIBILITY
+// ============================================================
+
+export interface UpdateUserRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: "admin" | "employee";
+  is_active?: boolean;
+}
+
+export async function updateUserApi(
+  userId: number | string,
+  data: UpdateUserRequest
+): Promise<any> {
+  console.warn(
+    "[CSA API] updateUserApi requested, but the current backend does not expose an update-user endpoint.",
+    {
+      userId,
+      data,
+    }
+  );
+
+  throw new Error(
+    "User update is not currently supported by the backend."
+  );
+}
+
+export async function deleteUserApi(
+  userId: number | string
+): Promise<any> {
+  console.warn(
+    "[CSA API] deleteUserApi requested, but the current backend does not expose a delete-user endpoint.",
+    userId
+  );
+
+  throw new Error(
+    "User deletion is not currently supported by the backend."
+  );
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+
+export {
+  API_BASE_URL,
+};

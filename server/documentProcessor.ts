@@ -109,7 +109,8 @@ export function computeTextEmbedding(text: string): number[] {
   const vocabulary = [
     'return', 'refund', 'money', 'cancel', 'shipping', 'delivery', 'warranty', 'damage',
     'broken', 'policy', 'days', '30', '15', '7', '60', 'privacy', 'security', 'password',
-    'leave', 'maternity', 'sick', 'holiday', 'hours', 'benefits', 'salary', 'fee', 'charge'
+    'leave', 'maternity', 'sick', 'holiday', 'hours', 'benefits', 'salary', 'fee', 'charge',
+    'annual', 'casual', 'pto', 'vacation', 'rules', 'guidelines', 'mfa', 'auth', 'credentials'
   ];
 
   const lower = text.toLowerCase();
@@ -181,14 +182,26 @@ export function processDocumentChunks(doc: PolicyDocumentRecord, fullText: strin
   return chunks;
 }
 
+const STOPWORDS = new Set([
+  'the', 'and', 'for', 'are', 'with', 'you', 'your', 'this', 'that', 'from', 'can',
+  'how', 'what', 'why', 'who', 'where', 'when', 'which', 'whom', 'whose', 'all',
+  'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'than',
+  'too', 'very', 'was', 'were', 'will', 'would', 'should', 'could', 'have', 'has',
+  'had', 'having', 'about', 'above', 'after', 'again', 'against', 'been', 'being',
+  'below', 'between', 'into', 'through', 'during', 'before', 'under', 'does', 'did',
+  'give', 'tell', 'like', 'know', 'please', 'just', 'need', 'want'
+]);
+
 // Role-Based Semantic Vector Search Engine
 export function searchPolicyChunks(query: string, userRole: UserRole, maxResults: number = 4): {
   chunk: PolicyChunkRecord;
   score: number;
 }[] {
   const allChunks = db.getChunks();
-  const queryLower = query.toLowerCase();
-  const queryTerms = queryLower.split(/\W+/).filter(t => t.length > 2);
+  const queryLower = query.toLowerCase().trim();
+  const queryTerms = queryLower
+    .split(/\W+/)
+    .filter(t => t.length > 2 && !STOPWORDS.has(t));
   const queryEmbedding = computeTextEmbedding(query);
 
   // Semantic term synonym map for customer query matching
@@ -197,10 +210,17 @@ export function searchPolicyChunks(query: string, userRole: UserRole, maxResults
     return: ['send back', 'exchange', 'returnable', 'eligibility', 'product'],
     damaged: ['broken', 'defective', 'faulty', 'scratched', 'issue'],
     shipping: ['delivery', 'courier', 'dispatch', 'post', 'transit'],
-    days: ['period', 'window', 'timeline', 'weeks', 'time'],
+    days: ['period', 'window', 'timeline', 'weeks', 'time', 'annual', 'calendar'],
     weeks: ['days', 'period', 'time'],
     month: ['days', '30'],
-    free: ['complimentary', 'no cost', 'zero fee']
+    free: ['complimentary', 'no cost', 'zero fee'],
+    leave: ['casual', 'sick', 'maternity', 'vacation', 'pto', 'time off', 'holiday', 'absence', 'annual', 'entitlement'],
+    annual: ['casual', 'leave', 'vacation', 'pto', 'holiday', 'days', 'year', 'calendar'],
+    vacation: ['leave', 'casual', 'holiday', 'pto', 'time off'],
+    password: ['security', 'credential', 'credentials', 'mfa', 'authentication', 'reset', 'expiration', 'characters', 'guidelines'],
+    passwords: ['security', 'credential', 'credentials', 'mfa', 'authentication', 'reset', 'expiration', 'characters', 'guidelines'],
+    security: ['password', 'mfa', 'authentication', 'credentials', 'access', 'guidelines', 'it'],
+    it: ['password', 'security', 'mfa', 'systems', 'access', 'guidelines']
   };
 
   const scoredResults: { chunk: PolicyChunkRecord; score: number }[] = [];
@@ -255,10 +275,13 @@ export function searchPolicyChunks(query: string, userRole: UserRole, maxResults
       const syns = synonyms[term] || [];
       for (const syn of syns) {
         if (chunkTextLower.includes(syn)) score += 8;
+        if (docTitleLower.includes(syn)) score += 10;
+        if (sectionLower.includes(syn)) score += 8;
       }
     }
 
-    if (score > 0) {
+    // Must have meaningful relevance to count
+    if (score >= 20) {
       scoredResults.push({ chunk, score });
     }
   }
@@ -266,6 +289,5 @@ export function searchPolicyChunks(query: string, userRole: UserRole, maxResults
   // Sort descending by score
   scoredResults.sort((a, b) => b.score - a.score);
 
-  // Group by document to ensure multi-document coverage if score is close
   return scoredResults.slice(0, maxResults);
 }

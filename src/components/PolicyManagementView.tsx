@@ -1,843 +1,1257 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FileText,
-  Upload,
-  FolderPlus,
-  ShieldCheck,
-  Eye,
-  Download,
-  RefreshCw,
-  Trash2,
-  Edit,
-  Search,
+  AlertTriangle,
   CheckCircle2,
   Clock,
-  AlertTriangle,
-  X,
-  Lock,
-  Sparkles,
-  ToggleLeft,
-  ToggleRight,
   Database,
-  FileCheck,
-  TrendingUp,
-  AlertCircle,
-  ChevronRight
-} from 'lucide-react';
-import { PolicyDocument, PolicyAccessLevel, PolicyStats } from '../types';
-import {
-  fetchAdminPoliciesApi,
-  fetchPolicyStatsApi,
-  uploadPoliciesApi,
-  deletePolicyApi,
-  reprocessPolicyApi,
-  updatePolicyApi
-} from '../services/api';
+  Eye,
+  FileText,
+  History,
+  RefreshCw,
+  Search,
+  Upload,
+  X,
+} from "lucide-react";
 
-// Step-by-step upload pipeline stages
-const PIPELINE_STEPS = [
-  { key: 'upload',     label: 'Uploading PDF...',             pct: 10 },
-  { key: 'read',       label: 'Reading PDF...',               pct: 25 },
-  { key: 'extract',    label: 'Extracting text...',           pct: 45 },
-  { key: 'chunks',     label: 'Creating knowledge chunks...', pct: 62 },
-  { key: 'embed',      label: 'Generating embeddings...',     pct: 78 },
-  { key: 'index',      label: 'Indexing document...',         pct: 90 },
-  { key: 'done',       label: 'Completed ✓',                  pct: 100 }
-];
+// ============================================================
+// TYPES - MATCHING YOUR FASTAPI BACKEND
+// ============================================================
+
+type DocumentStatus = "active" | "archived" | string;
+
+interface BackendDocument {
+  document_id: number;
+  document_name: string;
+  document_type: string;
+  version: number;
+  status: DocumentStatus;
+  filename: string;
+  uploaded_by: string;
+}
+
+interface DocumentsResponse {
+  total_documents: number;
+  documents: BackendDocument[];
+}
+
+interface DocumentHistoryResponse {
+  document_name: string;
+  total_versions: number;
+  versions: BackendDocument[];
+}
+
+// ============================================================
+// API CONFIG
+// ============================================================
+
+const API_BASE =
+  import.meta.env.VITE_API_URL?.trim() || "http://localhost:3009";
+
+// ============================================================
+// AUTH TOKEN
+// ============================================================
+
+function getToken(): string | null {
+  const possibleKeys = [
+    "access_token",
+    "token",
+    "authToken",
+    "jwt_token",
+    "jwt",
+  ];
+
+  for (const key of possibleKeys) {
+    const value = localStorage.getItem(key);
+
+    if (value) {
+      return value.replace(/^Bearer\s+/i, "");
+    }
+  }
+
+  return null;
+}
+
+// ============================================================
+// API REQUEST HELPER
+// ============================================================
+
+async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = getToken();
+
+  const headers = new Headers(options.headers);
+
+  headers.set("Accept", "application/json");
+
+  if (!(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+
+  let data: any = null;
+
+  if (contentType.includes("application/json")) {
+    data = await response.json();
+  } else {
+    data = await response.text();
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof data === "object" && data?.detail
+        ? data.detail
+        : `Request failed with status ${response.status}`;
+
+    throw new Error(message);
+  }
+
+  return data as T;
+}
+
+// ============================================================
+// API FUNCTIONS - ONLY REAL BACKEND ENDPOINTS
+// ============================================================
+
+async function fetchDocuments(): Promise<DocumentsResponse> {
+  return apiRequest<DocumentsResponse>("/documents/");
+}
+
+async function fetchDocumentHistory(
+  documentName: string
+): Promise<DocumentHistoryResponse> {
+  return apiRequest<DocumentHistoryResponse>(
+    `/documents/history/${encodeURIComponent(documentName)}`
+  );
+}
+
+async function uploadDocument(
+  file: File,
+  documentName: string,
+  documentType: string
+) {
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("document_name", documentName);
+  formData.append("document_type", documentType);
+
+  return apiRequest<any>("/documents/upload", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
 
 export const PolicyManagementView: React.FC = () => {
-  const [policies, setPolicies] = useState<PolicyDocument[]>([]);
-  const [stats, setStats] = useState<PolicyStats | null>(null);
+  const [documents, setDocuments] = useState<BackendDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [accessFilter, setAccessFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [success, setSuccess] = useState<string | null>(null);
 
-  // Upload Modal State
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadCategory, setUploadCategory] = useState<string>('General');
-  const [uploadAccessLevel, setUploadAccessLevel] = useState<PolicyAccessLevel>('EMPLOYEE');
-  const [isUploading, setIsUploading] = useState(false);
-  const [pipelineStep, setPipelineStep] = useState<number>(-1);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  // View / Edit / Delete Modal State
-  const [viewingPolicy, setViewingPolicy] = useState<PolicyDocument | null>(null);
-  const [editingPolicy, setEditingPolicy] = useState<PolicyDocument | null>(null);
-  const [deletingPolicy, setDeletingPolicy] = useState<PolicyDocument | null>(null);
-  const [reprocessingId, setReprocessingId] = useState<string | null>(null);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
+  // Upload
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentName, setDocumentName] = useState("");
+  const [documentType, setDocumentType] = useState("policy");
+  const [uploading, setUploading] = useState(false);
+
+  // View
+  const [viewDocument, setViewDocument] =
+    useState<BackendDocument | null>(null);
+
+  // History
+  const [historyDocument, setHistoryDocument] =
+    useState<BackendDocument | null>(null);
+
+  const [history, setHistory] = useState<BackendDocument[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
+  // ==========================================================
+  // LOAD DOCUMENTS
+  // ==========================================================
+
+  const loadDocuments = async () => {
     try {
-      const [data, s] = await Promise.all([fetchAdminPoliciesApi(), fetchPolicyStatsApi()]);
-      setPolicies(data);
-      setStats(s);
+      setError(null);
+
+      const result = await fetchDocuments();
+
+      setDocuments(result.documents || []);
     } catch (err: any) {
-      setError(err.message || 'Failed to load policy library.');
+      console.error("Document API error:", err);
+
+      setError(
+        err?.message ||
+          "Unable to load documents. Check backend and authentication."
+      );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadDocuments();
   }, []);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFiles(Array.from(e.target.files));
-      setUploadError(null);
-    }
+  // ==========================================================
+  // REFRESH
+  // ==========================================================
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadDocuments();
   };
 
-  const runPipeline = async (): Promise<void> => {
-    for (let i = 0; i < PIPELINE_STEPS.length - 1; i++) {
-      setPipelineStep(i);
-      await new Promise(r => setTimeout(r, 550 + Math.random() * 300));
-    }
-  };
+  // ==========================================================
+  // FILTER
+  // ==========================================================
 
-  const handleStartUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedFiles.length === 0) {
-      setUploadError('Please select at least one file or folder to upload.');
+  const filteredDocuments = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return documents.filter((doc) => {
+      const matchesSearch =
+        !query ||
+        doc.document_name.toLowerCase().includes(query) ||
+        doc.filename.toLowerCase().includes(query) ||
+        doc.uploaded_by.toLowerCase().includes(query);
+
+      const matchesType =
+        typeFilter === "all" ||
+        doc.document_type.toLowerCase() === typeFilter;
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        doc.status.toLowerCase() === statusFilter;
+
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [documents, searchQuery, typeFilter, statusFilter]);
+
+  // ==========================================================
+  // STATISTICS
+  // ==========================================================
+
+  const stats = useMemo(() => {
+    return {
+      total: documents.length,
+
+      active: documents.filter(
+        (doc) => doc.status.toLowerCase() === "active"
+      ).length,
+
+      archived: documents.filter(
+        (doc) => doc.status.toLowerCase() === "archived"
+      ).length,
+
+      policies: documents.filter(
+        (doc) => doc.document_type.toLowerCase() === "policy"
+      ).length,
+
+      faq: documents.filter(
+        (doc) => doc.document_type.toLowerCase() === "faq"
+      ).length,
+
+      support: documents.filter(
+        (doc) => doc.document_type.toLowerCase() === "support"
+      ).length,
+    };
+  }, [documents]);
+
+  // ==========================================================
+  // SELECT FILE
+  // ==========================================================
+
+  const handleFileSelect = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
       return;
     }
-    setIsUploading(true);
-    setUploadError(null);
-    setPipelineStep(0);
 
-    // Kick off animated pipeline stages in parallel with the real upload
-    const pipelinePromise = runPipeline();
+    if (file.type !== "application/pdf") {
+      setError("Only PDF files are allowed by the backend.");
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedFile(file);
+
+    if (!documentName) {
+      setDocumentName(file.name.replace(/\.pdf$/i, ""));
+    }
+
+    setError(null);
+  };
+
+  // ==========================================================
+  // UPLOAD
+  // ==========================================================
+
+  const handleUpload = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    setError(null);
+    setSuccess(null);
+
+    if (!selectedFile) {
+      setError("Please select a PDF file.");
+      return;
+    }
+
+    if (!documentName.trim()) {
+      setError("Please enter a document name.");
+      return;
+    }
+
+    if (!["policy", "faq", "support"].includes(documentType)) {
+      setError("Document type must be policy, faq, or support.");
+      return;
+    }
 
     try {
-      await uploadPoliciesApi(selectedFiles, uploadCategory, uploadAccessLevel);
-      await pipelinePromise; // ensure animation finished
-      setPipelineStep(PIPELINE_STEPS.length - 1); // 'Completed ✓'
-      await new Promise(r => setTimeout(r, 700));
-      setIsUploadModalOpen(false);
-      setSelectedFiles([]);
-      setPipelineStep(-1);
-      await loadData();
+      setUploading(true);
+
+      await uploadDocument(
+        selectedFile,
+        documentName.trim(),
+        documentType
+      );
+
+      setSuccess(
+        "Document uploaded and processed successfully."
+      );
+
+      setUploadOpen(false);
+
+      setSelectedFile(null);
+      setDocumentName("");
+      setDocumentType("policy");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      await loadDocuments();
     } catch (err: any) {
-      setUploadError(err.message || 'Failed to process document upload.');
-      setPipelineStep(-1);
+      console.error("Upload error:", err);
+
+      setError(
+        err?.message ||
+          "Document upload failed."
+      );
     } finally {
-      setIsUploading(false);
+      setUploading(false);
     }
   };
 
-  const handleToggleActive = async (p: PolicyDocument) => {
-    setTogglingId(p.id);
+  // ==========================================================
+  // HISTORY
+  // ==========================================================
+
+  const handleHistory = async (doc: BackendDocument) => {
+    setHistoryDocument(doc);
+    setHistory([]);
+    setHistoryLoading(true);
+    setError(null);
+
     try {
-      await updatePolicyApi(p.id, { isActive: !p.isActive });
-      await loadData();
+      const result = await fetchDocumentHistory(
+        doc.document_name
+      );
+
+      setHistory(result.versions || []);
     } catch (err: any) {
-      alert(err.message || 'Failed to toggle policy status.');
+      console.error("History error:", err);
+
+      setError(
+        err?.message ||
+          "Unable to load document history."
+      );
     } finally {
-      setTogglingId(null);
+      setHistoryLoading(false);
     }
   };
 
-  const handleReprocess = async (id: string) => {
-    setReprocessingId(id);
-    try {
-      await reprocessPolicyApi(id);
-      await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Reprocessing failed.');
-    } finally {
-      setReprocessingId(null);
+  // ==========================================================
+  // CLEAR MESSAGES
+  // ==========================================================
+
+  useEffect(() => {
+    if (!success) {
+      return;
     }
-  };
 
-  const handleDelete = async () => {
-    if (!deletingPolicy) return;
-    try {
-      await deletePolicyApi(deletingPolicy.id);
-      setDeletingPolicy(null);
-      await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Deletion failed.');
-    }
-  };
+    const timer = setTimeout(() => {
+      setSuccess(null);
+    }, 4000);
 
-  const handleUpdateAccessLevel = async (newAccessLevel: PolicyAccessLevel) => {
-    if (!editingPolicy) return;
-    try {
-      await updatePolicyApi(editingPolicy.id, { accessLevel: newAccessLevel });
-      setEditingPolicy(null);
-      await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Failed to update access level.');
-    }
-  };
+    return () => clearTimeout(timer);
+  }, [success]);
 
-  const filteredPolicies = policies.filter(p => {
-    const matchesSearch = p.originalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
-    const matchesAccess = accessFilter === 'all' || p.accessLevel === accessFilter;
-    const matchesStatus = statusFilter === 'all'
-      || (statusFilter === 'active' && p.isActive)
-      || (statusFilter === 'inactive' && !p.isActive)
-      || (statusFilter === p.status);
-    return matchesSearch && matchesCategory && matchesAccess && matchesStatus;
-  });
-
-  const currentPipelineStep = pipelineStep >= 0 && pipelineStep < PIPELINE_STEPS.length
-    ? PIPELINE_STEPS[pipelineStep]
-    : null;
+  // ==========================================================
+  // UI
+  // ==========================================================
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/30 border border-slate-800 p-6 rounded-2xl">
-        <div>
-          <div className="flex items-center gap-2">
-            <Database className="w-6 h-6 text-sky-400" />
-            <h1 className="text-xl font-bold text-white">Policy Knowledge Base</h1>
-          </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Upload PDF policy documents to feed the AI RAG engine. Configure role-based access & versioning.
-          </p>
-        </div>
+    <div className="min-h-full bg-slate-950 text-white p-4 md:p-6 space-y-6">
 
-        <button
-          onClick={() => {
-            setSelectedFiles([]);
-            setUploadError(null);
-            setPipelineStep(-1);
-            setIsUploadModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 transition shadow-lg shadow-sky-500/20 shrink-0"
-        >
-          <Upload className="w-4 h-4" />
-          <span>Upload Policies / Folder</span>
-        </button>
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
+
+      <div className="bg-gradient-to-r from-slate-900 to-indigo-950/40 border border-slate-800 rounded-2xl p-6">
+
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+          <div>
+            <div className="flex items-center gap-3">
+
+              <div className="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center">
+                <Database className="w-5 h-5" />
+              </div>
+
+              <div>
+                <h1 className="text-xl font-bold">
+                  Policy Knowledge Base
+                </h1>
+
+                <p className="text-xs text-slate-400 mt-1">
+                  Manage company PDF documents used by the RAG system.
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold hover:bg-slate-700 disabled:opacity-50"
+            >
+              <RefreshCw
+                className={`w-4 h-4 inline mr-2 ${
+                  refreshing ? "animate-spin" : ""
+                }`}
+              />
+
+              Refresh
+            </button>
+
+            <button
+              onClick={() => {
+                setUploadOpen(true);
+                setError(null);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+            >
+              <Upload className="w-4 h-4 inline mr-2" />
+              Upload PDF
+            </button>
+
+          </div>
+
+        </div>
       </div>
 
-      {/* KPI Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            {
-              label: 'Total Policies',
-              value: stats.total,
-              icon: <FileText className="w-5 h-5" />,
-              color: 'from-slate-800 to-slate-800',
-              textColor: 'text-slate-200',
-              iconColor: 'text-sky-400',
-              border: 'border-slate-700'
-            },
-            {
-              label: 'Active',
-              value: stats.active,
-              icon: <CheckCircle2 className="w-5 h-5" />,
-              color: 'from-emerald-950/40 to-slate-900',
-              textColor: 'text-emerald-300',
-              iconColor: 'text-emerald-400',
-              border: 'border-emerald-800/40'
-            },
-            {
-              label: 'Processing',
-              value: stats.processing,
-              icon: <Clock className="w-5 h-5" />,
-              color: 'from-amber-950/40 to-slate-900',
-              textColor: 'text-amber-300',
-              iconColor: 'text-amber-400',
-              border: 'border-amber-800/40'
-            },
-            {
-              label: 'Failed',
-              value: stats.failed,
-              icon: <AlertCircle className="w-5 h-5" />,
-              color: 'from-rose-950/40 to-slate-900',
-              textColor: 'text-rose-300',
-              iconColor: 'text-rose-400',
-              border: 'border-rose-800/40'
-            }
-          ].map((kpi) => (
-            <div
-              key={kpi.label}
-              className={`bg-gradient-to-br ${kpi.color} border ${kpi.border} rounded-2xl p-4 flex items-center gap-3`}
-            >
-              <div className={`${kpi.iconColor}`}>{kpi.icon}</div>
-              <div>
-                <div className={`text-2xl font-bold ${kpi.textColor}`}>{kpi.value}</div>
-                <div className="text-[11px] text-slate-500">{kpi.label}</div>
-              </div>
-            </div>
-          ))}
+      {/* ======================================================
+          SUCCESS
+      ====================================================== */}
+
+      {success && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-950/50 border border-emerald-800 text-emerald-300 text-sm">
+          <CheckCircle2 className="w-5 h-5" />
+          {success}
         </div>
       )}
 
-      {/* Controls: Search, Category, Role, Status Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by title or category..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          {[
-            {
-              label: 'Category',
-              value: categoryFilter,
-              onChange: setCategoryFilter,
-              options: [
-                ['all', 'All Categories'],
-                ['HR', 'HR'], ['IT', 'IT'], ['Finance', 'Finance'],
-                ['Security', 'Security'], ['Training', 'Training'],
-                ['Returns', 'Returns'], ['Refunds', 'Refunds'],
-                ['Shipping', 'Shipping'], ['Warranty', 'Warranty'],
-                ['Privacy', 'Privacy'], ['Billing', 'Billing'],
-                ['Customer Service', 'Customer Service'],
-                ['General', 'General']
-              ]
-            },
-            {
-              label: 'Access',
-              value: accessFilter,
-              onChange: setAccessFilter,
-              options: [['all','All Roles'], ['PUBLIC','PUBLIC'], ['EMPLOYEE','EMPLOYEE'], ['TRAINER','TRAINER'], ['ADMIN','ADMIN']]
-            },
-            {
-              label: 'Status',
-              value: statusFilter,
-              onChange: setStatusFilter,
-              options: [['all','All Status'], ['active','Active'], ['inactive','Inactive'], ['processing','Processing'], ['failed','Failed']]
-            }
-          ].map(f => (
-            <div key={f.label} className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-400">{f.label}:</span>
-              <select
-                value={f.value}
-                onChange={(e) => f.onChange(e.target.value)}
-                className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-200 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              >
-                {f.options.map(([val, lbl]) => (
-                  <option key={val} value={val}>{lbl}</option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* ======================================================
+          ERROR
+      ====================================================== */}
 
       {error && (
-        <div className="p-4 bg-rose-950/60 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-          <span>{error}</span>
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-950/50 border border-rose-800 text-rose-300 text-sm">
+
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+
+          <div className="flex-1">
+            {error}
+
+            <div className="text-xs text-rose-400/70 mt-2">
+              Backend: {API_BASE}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setError(null)}
+            className="text-rose-400 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
         </div>
       )}
 
-      {/* Policy Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      {/* ======================================================
+          STATISTICS
+      ====================================================== */}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+        <StatCard
+          title="Total Documents"
+          value={stats.total}
+          icon={<FileText className="w-5 h-5" />}
+        />
+
+        <StatCard
+          title="Active"
+          value={stats.active}
+          icon={<CheckCircle2 className="w-5 h-5" />}
+        />
+
+        <StatCard
+          title="Archived"
+          value={stats.archived}
+          icon={<History className="w-5 h-5" />}
+        />
+
+        <StatCard
+          title="Policies"
+          value={stats.policies}
+          icon={<Database className="w-5 h-5" />}
+        />
+
+      </div>
+
+      {/* ======================================================
+          FILTERS
+      ====================================================== */}
+
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+
+        <div className="flex flex-col md:flex-row gap-3">
+
+          <div className="relative flex-1">
+
+            <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+
+            <input
+              value={searchQuery}
+              onChange={(e) =>
+                setSearchQuery(e.target.value)
+              }
+              placeholder="Search documents..."
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+            />
+
+          </div>
+
+          <select
+            value={typeFilter}
+            onChange={(e) =>
+              setTypeFilter(e.target.value)
+            }
+            className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 outline-none"
+          >
+            <option value="all">All Types</option>
+            <option value="policy">Policy</option>
+            <option value="faq">FAQ</option>
+            <option value="support">Support</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value)
+            }
+            className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select>
+
+        </div>
+      </div>
+
+      {/* ======================================================
+          DOCUMENT TABLE
+      ====================================================== */}
+
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+
+        <div className="px-5 py-4 border-b border-slate-800 flex justify-between items-center">
+
+          <div>
+            <h2 className="font-semibold text-white">
+              Documents
+            </h2>
+
+            <p className="text-xs text-slate-500 mt-1">
+              {filteredDocuments.length} document(s)
+            </p>
+          </div>
+
+          <div className="text-xs text-slate-500">
+            RAG Knowledge Base
+          </div>
+
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase font-semibold border-b border-slate-800 text-[11px] tracking-wider">
-              <tr>
-                <th className="px-5 py-4">Document</th>
-                <th className="px-4 py-4">Category</th>
-                <th className="px-4 py-4">Access</th>
-                <th className="px-4 py-4">Version</th>
-                <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4">Active</th>
-                <th className="px-4 py-4 text-right">Actions</th>
+
+          <table className="w-full min-w-[850px]">
+
+            <thead className="bg-slate-950">
+
+              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500">
+
+                <th className="px-5 py-4">
+                  Document
+                </th>
+
+                <th className="px-4 py-4">
+                  Type
+                </th>
+
+                <th className="px-4 py-4">
+                  Version
+                </th>
+
+                <th className="px-4 py-4">
+                  Status
+                </th>
+
+                <th className="px-4 py-4">
+                  Uploaded By
+                </th>
+
+                <th className="px-4 py-4 text-right">
+                  Actions
+                </th>
+
               </tr>
+
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+
+            <tbody className="divide-y divide-slate-800">
+
               {loading ? (
+
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-slate-400">
-                    <Sparkles className="w-5 h-5 text-sky-400 animate-spin inline mr-2" />
-                    Loading policy knowledge base...
-                  </td>
-                </tr>
-              ) : filteredPolicies.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-10 text-slate-400">
-                    No policy documents found. Click <b>Upload Policies</b> to add company documents.
-                  </td>
-                </tr>
-              ) : (
-                filteredPolicies.map((p) => (
-                  <tr
-                    key={p.id}
-                    className={`hover:bg-slate-800/30 transition ${!p.isActive ? 'opacity-60' : ''}`}
+                  <td
+                    colSpan={6}
+                    className="text-center py-14 text-slate-400"
                   >
+                    <RefreshCw className="w-5 h-5 animate-spin inline mr-2" />
+                    Loading documents...
+                  </td>
+                </tr>
+
+              ) : filteredDocuments.length === 0 ? (
+
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="text-center py-14"
+                  >
+
+                    <FileText className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+
+                    <div className="text-slate-300 font-medium">
+                      No documents found
+                    </div>
+
+                    <div className="text-xs text-slate-500 mt-1">
+                      Upload a PDF to add knowledge to the RAG system.
+                    </div>
+
+                  </td>
+                </tr>
+
+              ) : (
+
+                filteredDocuments.map((doc) => (
+
+                  <tr
+                    key={doc.document_id}
+                    className="hover:bg-slate-800/40 transition"
+                  >
+
                     {/* Document */}
-                    <td className="px-5 py-4 font-medium text-white">
-                      <div className="flex items-start gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-[10px] font-bold border ${
-                          p.isActive
-                            ? 'bg-slate-800 border-slate-700 text-sky-400'
-                            : 'bg-slate-900 border-slate-800 text-slate-600'
-                        }`}>
-                          {p.originalName.split('.').pop()?.toUpperCase() || 'DOC'}
+
+                    <td className="px-5 py-4">
+
+                      <div className="flex items-center gap-3">
+
+                        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-indigo-400" />
                         </div>
+
                         <div>
-                          <div className={`font-semibold ${p.isActive ? 'text-slate-100' : 'text-slate-500 line-through'}`}>
-                            {p.originalName}
+
+                          <div className="font-semibold text-slate-100">
+                            {doc.document_name}
                           </div>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                            <span>{Math.round(p.size / 1024)} KB</span>
-                            <span>•</span>
-                            <span>{p.chunkCount} chunks</span>
-                            <span>•</span>
-                            <span>by {p.uploadedBy}</span>
-                            <span>•</span>
-                            <span>{new Date(p.uploadedAt).toLocaleDateString()}</span>
+
+                          <div className="text-[11px] text-slate-500 mt-1">
+                            {doc.filename}
                           </div>
+
                         </div>
+
                       </div>
+
                     </td>
 
-                    {/* Category */}
+                    {/* Type */}
+
                     <td className="px-4 py-4">
-                      <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                        {p.category}
+
+                      <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-semibold uppercase">
+                        {doc.document_type}
                       </span>
+
                     </td>
 
-                    {/* Access Level */}
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                        p.accessLevel === 'ADMIN'
-                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                          : p.accessLevel === 'TRAINER'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          : p.accessLevel === 'EMPLOYEE'
-                          ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                          : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      }`}>
-                        <Lock className="w-3 h-3" />
-                        {p.accessLevel}
-                      </span>
-                    </td>
+                    {/* Version */}
 
-                    {/* Version Badge */}
                     <td className="px-4 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border ${
-                        p.version > 1
-                          ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
-                          : 'bg-slate-800 text-slate-400 border-slate-700'
-                      }`}>
-                        v{p.version}
-                        {p.version > 1 && <TrendingUp className="w-3 h-3 ml-0.5" />}
+
+                      <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold">
+                        v{doc.version}
                       </span>
+
                     </td>
 
                     {/* Status */}
+
                     <td className="px-4 py-4">
-                      {p.status === 'indexed' && p.isActive && (
-                        <span className="inline-flex items-center gap-1.5 text-emerald-400 text-[11px] font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Indexed
+
+                      {doc.status === "active" ? (
+
+                        <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Active
                         </span>
+
+                      ) : (
+
+                        <span className="inline-flex items-center gap-1.5 text-slate-500 text-xs font-medium">
+                          <Clock className="w-4 h-4" />
+                          {doc.status}
+                        </span>
+
                       )}
-                      {p.status === 'inactive' || (!p.isActive && p.status !== 'failed') ? (
-                        <span className="inline-flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
-                          <X className="w-3.5 h-3.5" /> Inactive
-                        </span>
-                      ) : null}
-                      {p.status === 'processing' && (
-                        <span className="inline-flex items-center gap-1.5 text-amber-400 text-[11px] font-medium">
-                          <Clock className="w-3.5 h-3.5 animate-spin" /> Processing
-                        </span>
-                      )}
-                      {p.status === 'failed' && (
-                        <span className="inline-flex items-center gap-1.5 text-rose-400 text-[11px] font-medium">
-                          <AlertTriangle className="w-3.5 h-3.5" /> Failed
-                        </span>
-                      )}
+
                     </td>
 
-                    {/* Active Toggle */}
+                    {/* Uploaded by */}
+
                     <td className="px-4 py-4">
-                      <button
-                        onClick={() => handleToggleActive(p)}
-                        disabled={togglingId === p.id}
-                        title={p.isActive ? 'Click to deactivate (remove from AI knowledge base)' : 'Click to activate (add to AI knowledge base)'}
-                        className={`flex items-center gap-1.5 transition ${
-                          togglingId === p.id ? 'opacity-50 cursor-wait' : 'hover:opacity-80 cursor-pointer'
-                        }`}
-                      >
-                        {p.isActive
-                          ? <ToggleRight className="w-6 h-6 text-emerald-400" />
-                          : <ToggleLeft className="w-6 h-6 text-slate-600" />
-                        }
-                        <span className={`text-[11px] font-semibold ${p.isActive ? 'text-emerald-400' : 'text-slate-600'}`}>
-                          {p.isActive ? 'On' : 'Off'}
-                        </span>
-                      </button>
+
+                      <span className="text-xs text-slate-400">
+                        {doc.uploaded_by}
+                      </span>
+
                     </td>
 
                     {/* Actions */}
-                    <td className="px-4 py-4 text-right space-x-1">
-                      <button
-                        onClick={() => setViewingPolicy(p)}
-                        className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition"
-                        title="View Policy Summary"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
 
-                      <a
-                        href={`/api/policies/download/${p.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition inline-block"
-                        title="Download Document"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
+                    <td className="px-4 py-4">
 
-                      <button
-                        onClick={() => setEditingPolicy(p)}
-                        className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition"
-                        title="Change Access Level"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex justify-end gap-2">
 
-                      <button
-                        onClick={() => handleReprocess(p.id)}
-                        disabled={reprocessingId === p.id}
-                        className="p-1.5 rounded-lg bg-slate-800 text-sky-400 hover:bg-slate-700 transition disabled:opacity-50"
-                        title="Re-extract & Reprocess Document"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${reprocessingId === p.id ? 'animate-spin' : ''}`} />
-                      </button>
+                        <button
+                          onClick={() =>
+                            setViewDocument(doc)
+                          }
+                          title="View"
+                          className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
 
-                      <button
-                        onClick={() => setDeletingPolicy(p)}
-                        className="p-1.5 rounded-lg bg-rose-950/60 text-rose-400 hover:bg-rose-900/60 transition"
-                        title="Delete Document"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                        <button
+                          onClick={() =>
+                            handleHistory(doc)
+                          }
+                          title="Version History"
+                          className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-sky-400 hover:bg-slate-700"
+                        >
+                          <History className="w-4 h-4" />
+                        </button>
+
+                      </div>
+
                     </td>
+
                   </tr>
+
                 ))
+
               )}
+
             </tbody>
+
           </table>
+
         </div>
+
       </div>
 
-      {/* ======================== UPLOAD MODAL ======================== */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative">
-            <button
-              onClick={() => !isUploading && setIsUploadModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white disabled:cursor-not-allowed"
-              disabled={isUploading}
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {/* ======================================================
+          UPLOAD MODAL
+      ====================================================== */}
 
-            <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-              <Upload className="w-5 h-5 text-sky-400" />
-              Upload Company Policy Documents
-            </h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Select PDF, DOCX, DOC, TXT, CSV or XLSX files. Multiple files and folders are supported.
-            </p>
+      {uploadOpen && (
 
-            {uploadError && (
-              <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 rounded-xl text-xs text-rose-300">
-                {uploadError}
-              </div>
-            )}
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
 
-            <form onSubmit={handleStartUpload} className="space-y-4 text-xs">
-              {/* Drop Zone */}
-              <div className="border-2 border-dashed border-slate-700 hover:border-sky-500/60 rounded-2xl p-6 text-center bg-slate-950/50 transition">
-                <FolderPlus className="w-10 h-10 text-sky-400 mx-auto mb-2" />
-                <p className="font-semibold text-slate-200 text-xs">
-                  {selectedFiles.length > 0
-                    ? `${selectedFiles.length} file(s) selected`
-                    : 'Choose policy files or entire folder'}
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl">
+
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800">
+
+              <div>
+
+                <h3 className="font-bold text-white">
+                  Upload Document
+                </h3>
+
+                <p className="text-xs text-slate-500 mt-1">
+                  Add a PDF to the RAG knowledge base
                 </p>
-                <p className="text-[11px] text-slate-400 mt-1">PDF, DOCX, DOC, TXT, CSV, XLSX</p>
 
-                <div className="flex justify-center gap-3 mt-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".pdf,.docx,.doc,.txt,.csv,.xlsx"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <input
-                    ref={folderInputRef}
-                    type="file"
-                    // @ts-ignore
-                    webkitdirectory="true"
-                    directory="true"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-
-                  <button
-                    type="button"
-                    disabled={isUploading}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 disabled:opacity-50"
-                  >
-                    Select Files
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={isUploading}
-                    onClick={() => folderInputRef.current?.click()}
-                    className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-medium border border-sky-700/50 disabled:opacity-50"
-                  >
-                    Select Folder
-                  </button>
-                </div>
               </div>
 
-              {/* Selected Files Preview */}
-              {selectedFiles.length > 0 && (
-                <div className="max-h-28 overflow-y-auto bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1 font-mono text-[11px] text-slate-300">
-                  {selectedFiles.slice(0, 5).map((f, i) => (
-                    <div key={i} className="flex justify-between items-center">
-                      <span className="truncate max-w-[280px]">{f.name}</span>
-                      <span className="text-slate-500">{Math.round(f.size / 1024)} KB</span>
-                    </div>
-                  ))}
-                  {selectedFiles.length > 5 && (
-                    <div className="text-slate-500 italic">+ {selectedFiles.length - 5} more files</div>
-                  )}
-                </div>
-              )}
+              <button
+                onClick={() =>
+                  !uploading && setUploadOpen(false)
+                }
+                disabled={uploading}
+                className="text-slate-500 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-              {/* Metadata Inputs */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 mb-1">Document Category</label>
-                  <select
-                    value={uploadCategory}
-                    onChange={(e) => setUploadCategory(e.target.value)}
-                    className="w-full py-2 px-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
-                  >
-                    <option value="HR">HR Policies</option>
-                    <option value="IT">IT &amp; Systems</option>
-                    <option value="Finance">Finance &amp; Billing</option>
-                    <option value="Security">Security &amp; Compliance</option>
-                    <option value="Training">Training &amp; Onboarding</option>
-                    <option value="Returns">Returns Policy</option>
-                    <option value="Refunds">Refunds Policy</option>
-                    <option value="Shipping">Shipping Policy</option>
-                    <option value="Warranty">Warranty Policy</option>
-                    <option value="Privacy">Privacy Policy</option>
-                    <option value="Billing">Billing Policy</option>
-                    <option value="Customer Service">Customer Service</option>
-                    <option value="General">General Company</option>
-                  </select>
-                </div>
+            </div>
 
-                <div>
-                  <label className="block text-slate-300 mb-1">Role Access Restriction</label>
-                  <select
-                    value={uploadAccessLevel}
-                    onChange={(e) => setUploadAccessLevel(e.target.value as PolicyAccessLevel)}
-                    className="w-full py-2 px-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
-                  >
-                    <option value="PUBLIC">PUBLIC (All Users + Customers)</option>
-                    <option value="EMPLOYEE">EMPLOYEE (Employee &amp; Above)</option>
-                    <option value="TRAINER">TRAINER (Trainer &amp; Admin)</option>
-                    <option value="ADMIN">ADMIN ONLY (Restricted)</option>
-                  </select>
-                </div>
+            <form
+              onSubmit={handleUpload}
+              className="p-6 space-y-5"
+            >
+
+              {/* File */}
+
+              <div>
+
+                <label className="block text-xs font-medium text-slate-300 mb-2">
+                  PDF File
+                </label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handleFileSelect}
+                  disabled={uploading}
+                  className="block w-full text-xs text-slate-400 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white file:text-xs hover:file:bg-indigo-500"
+                />
+
+                {selectedFile && (
+                  <div className="mt-2 text-xs text-emerald-400">
+                    Selected: {selectedFile.name}
+                  </div>
+                )}
+
               </div>
 
-              {/* Step-by-Step Processing Pipeline Progress */}
-              {currentPipelineStep && (
-                <div className="p-4 bg-indigo-950/40 border border-indigo-800/50 rounded-2xl space-y-3">
-                  <div className="flex items-center justify-between text-xs text-indigo-300 font-semibold">
-                    <span>AI Processing Pipeline</span>
-                    <Sparkles className="w-4 h-4 text-sky-400 animate-spin" />
-                  </div>
+              {/* Document name */}
 
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-gradient-to-r from-sky-500 to-indigo-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${currentPipelineStep.pct}%` }}
-                    />
-                  </div>
+              <div>
 
-                  {/* Step Breadcrumb */}
-                  <div className="flex flex-wrap items-center gap-1">
-                    {PIPELINE_STEPS.map((step, idx) => {
-                      const stepIndex = PIPELINE_STEPS.indexOf(currentPipelineStep);
-                      const isDone = idx < stepIndex;
-                      const isCurrent = idx === stepIndex;
-                      return (
-                        <React.Fragment key={step.key}>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium transition-all ${
-                            isDone ? 'text-emerald-400' :
-                            isCurrent ? 'text-sky-300 font-bold' :
-                            'text-slate-600'
-                          }`}>
-                            {step.label}
-                          </span>
-                          {idx < PIPELINE_STEPS.length - 1 && (
-                            <ChevronRight className={`w-3 h-3 ${isDone ? 'text-emerald-700' : 'text-slate-700'}`} />
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
+                <label className="block text-xs font-medium text-slate-300 mb-2">
+                  Document Name
+                </label>
 
-                  <div className="text-[11px] text-slate-300 italic flex items-center gap-1.5">
-                    {pipelineStep === PIPELINE_STEPS.length - 1
-                      ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      : <Clock className="w-3.5 h-3.5 text-sky-400 animate-spin" />
-                    }
-                    <span>{currentPipelineStep.label}</span>
-                  </div>
+                <input
+                  value={documentName}
+                  onChange={(e) =>
+                    setDocumentName(e.target.value)
+                  }
+                  placeholder="Example: Employee Leave Policy"
+                  disabled={uploading}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-indigo-500"
+                />
+
+              </div>
+
+              {/* Document type */}
+
+              <div>
+
+                <label className="block text-xs font-medium text-slate-300 mb-2">
+                  Document Type
+                </label>
+
+                <select
+                  value={documentType}
+                  onChange={(e) =>
+                    setDocumentType(e.target.value)
+                  }
+                  disabled={uploading}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white outline-none"
+                >
+
+                  <option value="policy">
+                    Policy
+                  </option>
+
+                  <option value="faq">
+                    FAQ
+                  </option>
+
+                  <option value="support">
+                    Support
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* Backend limitations */}
+
+              <div className="p-3 rounded-xl bg-sky-950/30 border border-sky-800/40 text-xs text-sky-300">
+
+                <div className="font-semibold mb-1">
+                  Backend upload rules
                 </div>
-              )}
+
+                <ul className="list-disc ml-4 space-y-1 text-sky-400/80">
+                  <li>Only PDF files are accepted.</li>
+                  <li>Document type: policy, faq, or support.</li>
+                  <li>Admin authentication is required.</li>
+                  <li>Uploading the same name creates a new version.</li>
+                </ul>
+
+              </div>
+
+              {/* Buttons */}
 
               <div className="flex justify-end gap-3 pt-2">
+
                 <button
                   type="button"
-                  disabled={isUploading}
-                  onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs disabled:opacity-50"
+                  onClick={() =>
+                    setUploadOpen(false)
+                  }
+                  disabled={uploading}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold hover:bg-slate-700"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
-                  disabled={isUploading || selectedFiles.length === 0}
-                  className="px-4 py-2 rounded-xl bg-sky-600 text-white font-semibold hover:bg-sky-500 shadow-lg shadow-sky-600/20 text-xs disabled:opacity-50"
+                  disabled={uploading}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold disabled:opacity-50"
                 >
-                  {isUploading ? 'Processing...' : 'Upload & Generate RAG Knowledge'}
+
+                  {uploading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin inline mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 inline mr-2" />
+                      Upload & Process
+                    </>
+                  )}
+
                 </button>
+
               </div>
+
             </form>
+
           </div>
+
         </div>
+
       )}
 
-      {/* ======================== VIEW MODAL ======================== */}
-      {viewingPolicy && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative">
-            <button
-              onClick={() => setViewingPolicy(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-base font-bold text-white mb-1">{viewingPolicy.originalName}</h3>
-            <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-slate-400">
-              <span className="px-2 py-0.5 rounded bg-slate-800">{viewingPolicy.category}</span>
-              <span>•</span>
-              <span className="text-indigo-400">Access: {viewingPolicy.accessLevel}</span>
-              <span>•</span>
-              <span className="text-sky-400">v{viewingPolicy.version}</span>
-              <span>•</span>
-              <span>{viewingPolicy.chunkCount} Chunks</span>
-              <span>•</span>
-              <span className={viewingPolicy.isActive ? 'text-emerald-400' : 'text-slate-500'}>
-                {viewingPolicy.isActive ? '✓ Active in AI' : '⊘ Inactive'}
-              </span>
-            </div>
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs text-slate-300 max-h-60 overflow-y-auto font-mono whitespace-pre-wrap">
-              {viewingPolicy.extractedTextSnippet || viewingPolicy.summary || 'No text snippet available.'}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ======================================================
+          VIEW MODAL
+      ====================================================== */}
 
-      {/* ======================== EDIT ACCESS LEVEL MODAL ======================== */}
-      {editingPolicy && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
-            <h3 className="text-base font-bold text-white">Update Access Level</h3>
-            <p className="text-xs text-slate-400">
-              Select who can search and access <b>{editingPolicy.originalName}</b> in the AI Knowledge Base:
-            </p>
-            <div className="space-y-2 text-xs">
-              {(['PUBLIC', 'EMPLOYEE', 'TRAINER', 'ADMIN'] as PolicyAccessLevel[]).map((level) => (
-                <button
-                  key={level}
-                  onClick={() => handleUpdateAccessLevel(level)}
-                  className={`w-full py-2.5 px-4 rounded-xl border text-left font-semibold flex items-center justify-between ${
-                    editingPolicy.accessLevel === level
-                      ? 'bg-sky-600/20 border-sky-500 text-sky-300'
-                      : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'
-                  }`}
-                >
-                  <span>{level}</span>
-                  {editingPolicy.accessLevel === level && <CheckCircle2 className="w-4 h-4 text-sky-400" />}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setEditingPolicy(null)}
-              className="mt-2 text-xs text-slate-400 hover:text-white"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {viewDocument && (
 
-      {/* ======================== DELETE CONFIRMATION MODAL ======================== */}
-      {deletingPolicy && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 mx-auto flex items-center justify-center">
-              <Trash2 className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">Delete Document?</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Are you sure you want to delete <b>{deletingPolicy.originalName}</b>? This will also remove its indexed vector chunks from the AI Knowledge Base.
-              </p>
-            </div>
-            <div className="flex justify-center gap-3 pt-2">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl">
+
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800">
+
+              <h3 className="font-bold text-white">
+                Document Details
+              </h3>
+
               <button
-                onClick={() => setDeletingPolicy(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700"
+                onClick={() =>
+                  setViewDocument(null)
+                }
+                className="text-slate-500 hover:text-white"
               >
-                Cancel
+                <X className="w-5 h-5" />
               </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500 shadow-lg shadow-rose-600/25"
-              >
-                Delete Policy
-              </button>
+
             </div>
+
+            <div className="p-6 space-y-4">
+
+              <Detail
+                label="Document ID"
+                value={String(viewDocument.document_id)}
+              />
+
+              <Detail
+                label="Document Name"
+                value={viewDocument.document_name}
+              />
+
+              <Detail
+                label="Filename"
+                value={viewDocument.filename}
+              />
+
+              <Detail
+                label="Type"
+                value={viewDocument.document_type}
+              />
+
+              <Detail
+                label="Version"
+                value={`v${viewDocument.version}`}
+              />
+
+              <Detail
+                label="Status"
+                value={viewDocument.status}
+              />
+
+              <Detail
+                label="Uploaded By"
+                value={viewDocument.uploaded_by}
+              />
+
+            </div>
+
           </div>
+
         </div>
+
       )}
+
+      {/* ======================================================
+          HISTORY MODAL
+      ====================================================== */}
+
+      {historyDocument && (
+
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+
+          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl">
+
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800">
+
+              <div>
+
+                <h3 className="font-bold text-white">
+                  Version History
+                </h3>
+
+                <p className="text-xs text-slate-500 mt-1">
+                  {historyDocument.document_name}
+                </p>
+
+              </div>
+
+              <button
+                onClick={() =>
+                  setHistoryDocument(null)
+                }
+                className="text-slate-500 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+            </div>
+
+            <div className="p-6">
+
+              {historyLoading ? (
+
+                <div className="text-center py-10 text-slate-400">
+
+                  <RefreshCw className="w-5 h-5 animate-spin inline mr-2" />
+
+                  Loading version history...
+
+                </div>
+
+              ) : history.length === 0 ? (
+
+                <div className="text-center py-10 text-slate-500">
+                  No version history found.
+                </div>
+
+              ) : (
+
+                <div className="space-y-3">
+
+                  {history.map((version) => (
+
+                    <div
+                      key={version.document_id}
+                      className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800"
+                    >
+
+                      <div>
+
+                        <div className="font-semibold text-white">
+                          Version {version.version}
+                        </div>
+
+                        <div className="text-xs text-slate-500 mt-1">
+                          {version.filename}
+                        </div>
+
+                        <div className="text-xs text-slate-600 mt-1">
+                          Uploaded by {version.uploaded_by}
+                        </div>
+
+                      </div>
+
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                          version.status === "active"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-slate-800 text-slate-500 border border-slate-700"
+                        }`}
+                      >
+                        {version.status}
+                      </span>
+
+                    </div>
+
+                  ))}
+
+                </div>
+
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
     </div>
   );
 };
+
+// ============================================================
+// SMALL COMPONENTS
+// ============================================================
+
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+
+      <div className="flex items-center justify-between">
+
+        <div>
+
+          <div className="text-2xl font-bold text-white">
+            {value}
+          </div>
+
+          <div className="text-xs text-slate-500 mt-1">
+            {title}
+          </div>
+
+        </div>
+
+        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+          {icon}
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+function Detail({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-slate-950 border border-slate-800">
+
+      <span className="text-xs text-slate-500">
+        {label}
+      </span>
+
+      <span className="text-xs text-slate-200 text-right break-all">
+        {value}
+      </span>
+
+    </div>
+  );
+}
+
+export default PolicyManagementView;
