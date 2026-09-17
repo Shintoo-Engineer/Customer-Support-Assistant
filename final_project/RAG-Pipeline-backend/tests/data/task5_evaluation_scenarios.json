@@ -1,0 +1,700 @@
+{
+  "version": "1.0",
+  "description": "Task 5 Phase 4 Multi-Scenario Evaluation Dataset grounded in actual Customer Support Assistant ChromaDB knowledge base.",
+  "knowledge_base_documents": [
+    "Customer Support FAQ",
+    "Test Policy Doc",
+    "Refund Policy",
+    "Test Refund Policy Doc",
+    "Live Test Refund Policy",
+    "QA Test Refund Policy",
+    "QA FAQ Document",
+    "Refund Policy Typo Doc"
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "S01",
+      "scenario_name": "Delayed Order Status Inquiry",
+      "support_domain": "delivery_delay",
+      "customer_persona": "frustrated",
+      "initial_emotion": "frustrated",
+      "issue_severity": 3,
+      "patience_level": 3,
+      "expected_resolution": "Provide tracking status, carrier delay explanation, and delivery ETA",
+      "initial_customer_query": "My order #ORD-78219 was scheduled for guaranteed delivery 3 days ago, but the tracking hasn't updated and the package still hasn't arrived. Where is my item?",
+      "expected_intent": "delivery_issue",
+      "expected_knowledge_topics": [
+        "orders",
+        "tracking",
+        "order reference",
+        "delivery status"
+      ],
+      "expected_document_types": [
+        "faq",
+        "policy"
+      ],
+      "expected_documents": [
+        "Customer Support FAQ",
+        "QA FAQ Document"
+      ],
+      "expected_keywords": [
+        "order",
+        "delivery",
+        "tracking",
+        "status",
+        "reference"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "My order #ORD-78219 was scheduled for guaranteed delivery 3 days ago, but the tracking hasn't updated and the package still hasn't arrived. Where is my item?",
+          "agent_response": "I sincerely apologize for the delay with order #ORD-78219. Let me check the courier transit logs for you."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Where is it now? I really need this package before the weekend.",
+          "agent_response": "The carrier shows the package arrived at the regional depot. It is scheduled for delivery tomorrow morning."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S02",
+      "scenario_name": "Standard Refund Request Within Window",
+      "support_domain": "refund",
+      "customer_persona": "calm",
+      "initial_emotion": "neutral",
+      "issue_severity": 2,
+      "patience_level": 4,
+      "expected_resolution": "Confirm refund eligibility within 15-day window and explain 5-10 day payout process",
+      "initial_customer_query": "Hi, I purchased a software license 5 days ago with order reference #ORD-55410, but our company decided on another tool. I would like to request a full refund.",
+      "expected_intent": "refund",
+      "expected_knowledge_topics": [
+        "refund eligibility",
+        "refund process",
+        "calendar days",
+        "support portal"
+      ],
+      "expected_document_types": [
+        "policy"
+      ],
+      "expected_documents": [
+        "Refund Policy",
+        "Test Refund Policy Doc",
+        "Live Test Refund Policy",
+        "QA Test Refund Policy"
+      ],
+      "expected_keywords": [
+        "refund",
+        "calendar days",
+        "purchase date",
+        "eligibility",
+        "portal"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "Hi, I purchased a software license 5 days ago with order reference #ORD-55410, but our company decided on another tool. I would like to request a full refund.",
+          "agent_response": "I can certainly help you process that refund request under our 15-day refund policy."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Thank you. How long does the refund take to appear back on my credit card?",
+          "agent_response": "Once approved, refunds typically take 5 to 10 business days to reflect on your original payment method."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S03",
+      "scenario_name": "Checkout Payment Decline Error",
+      "support_domain": "payment_failure",
+      "customer_persona": "confused",
+      "initial_emotion": "confused",
+      "issue_severity": 3,
+      "patience_level": 3,
+      "expected_resolution": "Guide customer through card verification, 3D secure check, and retry steps without recording sensitive card data",
+      "initial_customer_query": "I am trying to pay for my subscription renewal, but my payment keeps failing at checkout with an error. My card has enough funds, so why won't it go through?",
+      "expected_intent": "payment_issue",
+      "expected_knowledge_topics": [
+        "payment failed",
+        "checkout errors",
+        "verify card details",
+        "retry payment"
+      ],
+      "expected_document_types": [
+        "policy",
+        "faq"
+      ],
+      "expected_documents": [
+        "Test Policy Doc",
+        "Customer Support FAQ"
+      ],
+      "expected_keywords": [
+        "payment",
+        "checkout",
+        "failed",
+        "card details",
+        "retry"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "I am trying to pay for my subscription renewal, but my payment keeps failing at checkout with an error. My card has enough funds, so why won't it go through?",
+          "agent_response": "I'm sorry to hear that. For checkout errors, please verify your billing address and try using a private browsing window."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Wait, I tried again and it still failed... should I contact my bank or try another card?",
+          "agent_response": "Yes, please confirm with your bank if 3D-Secure authorization is pending, or try an alternate card."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S04",
+      "scenario_name": "Account Login Lockout & Password Reset",
+      "support_domain": "login_account_issue",
+      "customer_persona": "impatient",
+      "initial_emotion": "worried",
+      "issue_severity": 3,
+      "patience_level": 2,
+      "expected_resolution": "Direct customer to 'Forgot Password' link on login screen and explain spam folder verification",
+      "initial_customer_query": "I cannot log in to my account and I have an urgent client demo in 20 minutes! How do I reset my password immediately?",
+      "expected_intent": "account_issue",
+      "expected_knowledge_topics": [
+        "reset password",
+        "forgot password",
+        "login problems",
+        "registered email"
+      ],
+      "expected_document_types": [
+        "faq",
+        "policy"
+      ],
+      "expected_documents": [
+        "Customer Support FAQ",
+        "Test Policy Doc",
+        "QA FAQ Document"
+      ],
+      "expected_keywords": [
+        "password",
+        "reset",
+        "login",
+        "forgot",
+        "email"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "I cannot log in to my account and I have an urgent client demo in 20 minutes! How do I reset my password immediately?",
+          "agent_response": "Select 'Forgot Password' on the login screen to receive an instant verification link at your registered email."
+        },
+        {
+          "turn": 2,
+          "customer_message": "I clicked it 5 minutes ago and still haven't received the reset email. Where is it?",
+          "agent_response": "Please check your spam or junk folder. If it has not arrived after 10 minutes, our support team can verify your identity manually."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S05",
+      "scenario_name": "Subscription Auto-Renewal Cancellation",
+      "support_domain": "cancellation",
+      "customer_persona": "polite",
+      "initial_emotion": "neutral",
+      "issue_severity": 2,
+      "patience_level": 5,
+      "expected_resolution": "Guide customer on canceling auto-renewal before the billing cycle renews",
+      "initial_customer_query": "Hello, could you please guide me on how to cancel my monthly subscription so that I am not charged on the next renewal date?",
+      "expected_intent": "cancellation",
+      "expected_knowledge_topics": [
+        "cancellation",
+        "orders",
+        "billing cycle",
+        "refund eligibility"
+      ],
+      "expected_document_types": [
+        "faq",
+        "policy"
+      ],
+      "expected_documents": [
+        "Customer Support FAQ",
+        "Refund Policy"
+      ],
+      "expected_keywords": [
+        "cancel",
+        "subscription",
+        "order",
+        "billing"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "Hello, could you please guide me on how to cancel my monthly subscription so that I am not charged on the next renewal date?",
+          "agent_response": "Hello! You can disable auto-renewal directly from your account settings under the Billing & Plans tab."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Thank you so much! Will I still have access to my features until the end of this billing cycle?",
+          "agent_response": "Yes, your account remains fully active until the final day of your current paid billing period."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S06",
+      "scenario_name": "Defective Product Return & Replacement",
+      "support_domain": "product_replacement",
+      "customer_persona": "calm",
+      "initial_emotion": "neutral",
+      "issue_severity": 2,
+      "patience_level": 4,
+      "expected_resolution": "Verify return conditions: usable condition, order reference, return shipping",
+      "initial_customer_query": "I received my hardware package yesterday under order #ORD-99210, but the power adapter is defective. Can I return this for a replacement or refund?",
+      "expected_intent": "return_exchange",
+      "expected_knowledge_topics": [
+        "return policy",
+        "usable condition",
+        "eligibility",
+        "order reference"
+      ],
+      "expected_document_types": [
+        "policy"
+      ],
+      "expected_documents": [
+        "Refund Policy",
+        "QA Test Refund Policy"
+      ],
+      "expected_keywords": [
+        "return",
+        "refund",
+        "condition",
+        "order reference",
+        "replacement"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "I received my hardware package yesterday under order #ORD-99210, but the power adapter is defective. Can I return this for a replacement or refund?",
+          "agent_response": "I'm sorry to hear that. Under our return policy, items in usable condition with original packaging qualify for return or replacement within 15 days."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Understood. Where do I send the package and how do I get a return shipping label?",
+          "agent_response": "Submit your request through our support portal with your order reference #ORD-99210 to generate a prepaid shipping label."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S07",
+      "scenario_name": "Angry Customer Overcharged on Subscription",
+      "support_domain": "frustrated_angry_customer",
+      "customer_persona": "angry",
+      "initial_emotion": "angry",
+      "issue_severity": 4,
+      "patience_level": 1,
+      "expected_resolution": "Acknowledge frustration, verify cancellation request date, and issue full refund",
+      "initial_customer_query": "This is completely unacceptable! I canceled my membership last week and you just charged my credit card $49.99 today! Refund my money right now or I will contact my bank and dispute the charge!",
+      "expected_intent": "refund",
+      "expected_knowledge_topics": [
+        "refund eligibility",
+        "refund process",
+        "disputed charge",
+        "support portal"
+      ],
+      "expected_document_types": [
+        "policy"
+      ],
+      "expected_documents": [
+        "Refund Policy",
+        "Test Policy Doc"
+      ],
+      "expected_keywords": [
+        "refund",
+        "charged",
+        "card",
+        "eligibility",
+        "payment"
+      ],
+      "number_of_turns": 3,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "This is completely unacceptable! I canceled my membership last week and you just charged my credit card $49.99 today! Refund my money right now or I will contact my bank and dispute the charge!",
+          "agent_response": "I understand your frustration and apologize for this charge. Let me look up your cancellation confirmation immediately."
+        },
+        {
+          "turn": 2,
+          "customer_message": "I don't want excuses, I want my $49.99 back! Did you process the refund or not?",
+          "agent_response": "I have verified your cancellation and submitted the full $49.99 refund transaction. It will reflect on your card in 3-5 business days."
+        },
+        {
+          "turn": 3,
+          "customer_message": "Send me the transaction confirmation email right now so I have written proof.",
+          "agent_response": "I have just sent the refund confirmation and receipt to your registered email address."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S08",
+      "scenario_name": "Missing Order Reference Lookup",
+      "support_domain": "delivery_delay",
+      "customer_persona": "confused",
+      "initial_emotion": "confused",
+      "issue_severity": 2,
+      "patience_level": 4,
+      "expected_resolution": "Direct customer to Orders section in account to find unique order reference",
+      "initial_customer_query": "I bought something on your website yesterday but I don't know where to find my order reference number to track it. Where can I find my order reference?",
+      "expected_intent": "general_inquiry",
+      "expected_knowledge_topics": [
+        "order reference",
+        "orders section",
+        "account",
+        "tracking"
+      ],
+      "expected_document_types": [
+        "faq"
+      ],
+      "expected_documents": [
+        "Customer Support FAQ",
+        "QA FAQ Document"
+      ],
+      "expected_keywords": [
+        "order reference",
+        "orders",
+        "account",
+        "find"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "I bought something on your website yesterday but I don't know where to find my order reference number to track it. Where can I find my order reference?",
+          "agent_response": "Open the Orders section in your account. Each order displays a unique order reference number."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Oh I see it now, #ORD-44910! How do I use this number to check if it has shipped?",
+          "agent_response": "Click on the order reference to view the live tracking link and current shipping carrier status."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S09",
+      "scenario_name": "Missing Password Reset Verification Email",
+      "support_domain": "login_account_issue",
+      "customer_persona": "confused",
+      "initial_emotion": "confused",
+      "issue_severity": 2,
+      "patience_level": 3,
+      "expected_resolution": "Check spam/junk folder and wait 10 minutes before escalating to support",
+      "initial_customer_query": "I tried resetting my account password, but I did not receive the reset email after clicking the button. What should I do?",
+      "expected_intent": "account_issue",
+      "expected_knowledge_topics": [
+        "reset email",
+        "spam junk folders",
+        "10 minutes",
+        "support"
+      ],
+      "expected_document_types": [
+        "faq",
+        "policy"
+      ],
+      "expected_documents": [
+        "Customer Support FAQ",
+        "Test Policy Doc",
+        "QA FAQ Document"
+      ],
+      "expected_keywords": [
+        "reset",
+        "email",
+        "spam",
+        "password",
+        "support"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "I tried resetting my account password, but I did not receive the reset email after clicking the button. What should I do?",
+          "agent_response": "Please check your spam or junk folder first. If the email is still missing after 10 minutes, our support agents can assist."
+        },
+        {
+          "turn": 2,
+          "customer_message": "I checked my spam folder and nothing is there either. Can you verify my email address on file?",
+          "agent_response": "Certainly. Please provide your registered account email and I will verify its status in our database."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S10",
+      "scenario_name": "Repeated Payment Failures at Checkout",
+      "support_domain": "payment_failure",
+      "customer_persona": "frustrated",
+      "initial_emotion": "frustrated",
+      "issue_severity": 3,
+      "patience_level": 2,
+      "expected_resolution": "Explain verification of card details, avoiding recording full card numbers, and clearing cache",
+      "initial_customer_query": "For a failed payment, what does your policy say? My card was declined twice even though the balance is fine. Why are checkout errors happening?",
+      "expected_intent": "payment_issue",
+      "expected_knowledge_topics": [
+        "failed payment",
+        "verify card details",
+        "retry once",
+        "checkout errors"
+      ],
+      "expected_document_types": [
+        "policy",
+        "faq"
+      ],
+      "expected_documents": [
+        "Test Policy Doc",
+        "Customer Support FAQ"
+      ],
+      "expected_keywords": [
+        "payment",
+        "checkout",
+        "failed",
+        "card details",
+        "retry"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "For a failed payment, what does your policy say? My card was declined twice even though the balance is fine. Why are checkout errors happening?",
+          "agent_response": "For a failed payment, our policy asks customers to verify card details and retry once. We never record full card numbers."
+        },
+        {
+          "turn": 2,
+          "customer_message": "I verified the details and retried, but it failed again! What is the next troubleshooting step?",
+          "agent_response": "Please clear your browser cache or try an incognito window, as outdated cookies can disrupt secure checkout sessions."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S11",
+      "scenario_name": "Digital Product Refund for Technical Issue",
+      "support_domain": "refund",
+      "customer_persona": "calm",
+      "initial_emotion": "neutral",
+      "issue_severity": 2,
+      "patience_level": 4,
+      "expected_resolution": "Clarify that digital products qualify for refunds when technical issues prevent normal use",
+      "initial_customer_query": "Are digital products eligible for a refund? I purchased a downloadable plugin yesterday that crashes on launch and cannot be used.",
+      "expected_intent": "refund",
+      "expected_knowledge_topics": [
+        "digital products",
+        "refund eligibility",
+        "technical issue",
+        "normal use"
+      ],
+      "expected_document_types": [
+        "policy"
+      ],
+      "expected_documents": [
+        "Refund Policy",
+        "Test Refund Policy Doc",
+        "QA Test Refund Policy"
+      ],
+      "expected_keywords": [
+        "digital products",
+        "refund",
+        "technical issue",
+        "eligible",
+        "policy"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "Are digital products eligible for a refund? I purchased a downloadable plugin yesterday that crashes on launch and cannot be used.",
+          "agent_response": "Yes, digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve it."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Great, what proof do I need to submit with my refund request?",
+          "agent_response": "Please attach a screenshot of the crash error and your order reference when submitting the request on the support portal."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S12",
+      "scenario_name": "Login Problems & Browser Cache Troubleshooting",
+      "support_domain": "login_account_issue",
+      "customer_persona": "calm",
+      "initial_emotion": "neutral",
+      "issue_severity": 2,
+      "patience_level": 4,
+      "expected_resolution": "Advise customer to confirm registered email, clear browser cache, or use private browsing",
+      "initial_customer_query": "If a customer cannot log in, what are the recommended troubleshooting steps in your technical guide?",
+      "expected_intent": "account_issue",
+      "expected_knowledge_topics": [
+        "login problems",
+        "registered email",
+        "browser cache",
+        "private browsing"
+      ],
+      "expected_document_types": [
+        "policy",
+        "faq"
+      ],
+      "expected_documents": [
+        "Test Policy Doc",
+        "Customer Support FAQ"
+      ],
+      "expected_keywords": [
+        "login",
+        "problems",
+        "email",
+        "browser cache",
+        "troubleshooting"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "If a customer cannot log in, what are the recommended troubleshooting steps in your technical guide?",
+          "agent_response": "First confirm the registered email address is correct, clear browser cache, or attempt login in a private browsing window."
+        },
+        {
+          "turn": 2,
+          "customer_message": "If the account still remains inaccessible after that, what is the escalation procedure?",
+          "agent_response": "If inaccessible, our policy is to escalate with the account email, timestamp, and specific error message."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S13",
+      "scenario_name": "Refund Request Outside 15-Day Policy Window",
+      "support_domain": "refund",
+      "customer_persona": "impatient",
+      "initial_emotion": "frustrated",
+      "issue_severity": 3,
+      "patience_level": 2,
+      "expected_resolution": "Explain 15-day / 30-day cutoff rules and conditions for denial",
+      "initial_customer_query": "I bought an item 45 days ago and I want a refund now. Can a refund be denied when the purchase is outside the eligible period?",
+      "expected_intent": "refund",
+      "expected_knowledge_topics": [
+        "refund eligibility",
+        "calendar days",
+        "outside eligible period",
+        "denied"
+      ],
+      "expected_document_types": [
+        "policy"
+      ],
+      "expected_documents": [
+        "Test Refund Policy Doc",
+        "Refund Policy"
+      ],
+      "expected_keywords": [
+        "refund",
+        "calendar days",
+        "eligible period",
+        "denied",
+        "policy"
+      ],
+      "number_of_turns": 2,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "I bought an item 45 days ago and I want a refund now. Can a refund be denied when the purchase is outside the eligible period?",
+          "agent_response": "Under our policy, refund requests submitted past the eligible calendar day window may unfortunately be denied."
+        },
+        {
+          "turn": 2,
+          "customer_message": "Can an exception be made by a supervisor if the product was never opened?",
+          "agent_response": "Exceptions require manager approval and are considered on a case-by-case basis for unopened products."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S14",
+      "scenario_name": "Out-of-Domain Query: Astrophysics Gravitational Waves",
+      "support_domain": "out_of_domain",
+      "customer_persona": "calm",
+      "initial_emotion": "neutral",
+      "issue_severity": 1,
+      "patience_level": 5,
+      "expected_resolution": "Safely return zero recommendations and flag no relevant information",
+      "initial_customer_query": "How do gravitational waves propagate across cosmic distances through curved spacetime according to general relativity?",
+      "expected_intent": "general_inquiry",
+      "expected_knowledge_topics": [],
+      "expected_document_types": [],
+      "expected_documents": [],
+      "expected_keywords": [
+        "gravitational",
+        "spacetime",
+        "physics"
+      ],
+      "number_of_turns": 1,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "How do gravitational waves propagate across cosmic distances through curved spacetime according to general relativity?",
+          "agent_response": "I specialize in customer support for our software services and cannot answer physics questions."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S15",
+      "scenario_name": "Out-of-Domain Query: Geography Capital Cities",
+      "support_domain": "out_of_domain",
+      "customer_persona": "polite",
+      "initial_emotion": "neutral",
+      "issue_severity": 1,
+      "patience_level": 5,
+      "expected_resolution": "Safely return zero recommendations and flag no relevant information",
+      "initial_customer_query": "Could you please tell me the capital city of Australia and what timezone Canberra operates in?",
+      "expected_intent": "general_inquiry",
+      "expected_knowledge_topics": [],
+      "expected_document_types": [],
+      "expected_documents": [],
+      "expected_keywords": [
+        "capital",
+        "Australia",
+        "geography"
+      ],
+      "number_of_turns": 1,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "Could you please tell me the capital city of Australia and what timezone Canberra operates in?",
+          "agent_response": "I am a customer support agent. Please reach out to general information resources for geography queries."
+        }
+      ]
+    },
+    {
+      "scenario_id": "S16",
+      "scenario_name": "Out-of-Domain Query: Culinary Baking Recipe",
+      "support_domain": "out_of_domain",
+      "customer_persona": "calm",
+      "initial_emotion": "neutral",
+      "issue_severity": 1,
+      "patience_level": 5,
+      "expected_resolution": "Safely return zero recommendations and flag no relevant information",
+      "initial_customer_query": "What is the recommended oven temperature and baking time for traditional sourdough bread with high hydration dough?",
+      "expected_intent": "general_inquiry",
+      "expected_knowledge_topics": [],
+      "expected_document_types": [],
+      "expected_documents": [],
+      "expected_keywords": [
+        "sourdough",
+        "baking",
+        "oven"
+      ],
+      "number_of_turns": 1,
+      "turns": [
+        {
+          "turn": 1,
+          "customer_message": "What is the recommended oven temperature and baking time for traditional sourdough bread with high hydration dough?",
+          "agent_response": "I can only assist with customer support inquiries regarding accounts, billing, and orders."
+        }
+      ]
+    }
+  ]
+}

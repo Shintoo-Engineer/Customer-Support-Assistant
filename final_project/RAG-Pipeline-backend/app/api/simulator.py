@@ -1,0 +1,509 @@
+import json
+import logging
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session as DBSession
+
+from app.models.database import SessionLocal
+from app.models.simulator import Scenario, Session, Conversation, Message
+from app.services.simulator_service import generate_customer_turn
+from app.services.simulator_state import initial_state
+from app.services.scenario_service import SCENARIOS, get_scenario_brief
+from app.services.persona_service import get_persona_brief
+from app.services.analysis_service import analyze_customer_message
+
+logger = logging.getLogger(__name__)
+
+
+router = APIRouter(
+    prefix="/simulator",
+    tags=["Customer Simulator"]
+)
+
+
+# --------------------------------------------------
+# Database dependency
+# --------------------------------------------------
+
+def get_db():
+
+    db = SessionLocal()
+
+    try:
+        yield db
+
+    finally:
+        db.close()
+
+
+# --------------------------------------------------
+# Request models
+# --------------------------------------------------
+
+class SimulatorStartRequest(BaseModel):
+
+    session_label: str
+
+    persona: str
+
+    scenario: str
+
+    initial_emotion: str
+
+    issue_severity: int
+
+    patience_level: int
+
+    expected_resolution: str
+
+
+class SimulatorMessageRequest(BaseModel):
+
+    session_id: int
+
+    agent_response: str
+
+
+from app.services.knowledge_recommendation_service import get_knowledge_recommendations
+
+
+# --------------------------------------------------
+# Endpoint 1: Start Simulation
+# --------------------------------------------------
+
+@router.post("/start")
+def start_simulator_session(
+    request: SimulatorStartRequest,
+    db: DBSession = Depends(get_db)
+):
+    # Validate scenario
+    try:
+        get_scenario_brief(request.scenario)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+    # Validate persona
+    try:
+        get_persona_brief(request.persona)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+    scenario_key = request.scenario.strip().lower()
+    scenario_data = SCENARIOS[scenario_key]
+
+    # Create Scenario row
+    scenario_row = Scenario(
+        title=request.session_label or f"Scenario - {scenario_key.title()}",
+        category=scenario_key,
+        difficulty="Medium",
+        objective=request.expected_resolution or scenario_data.get("resolution_condition"),
+        description=scenario_data.get("opening_complaint"),
+        is_active=True
+    )
+    db.add(scenario_row)
+    db.flush()
+
+    # Create Session row
+    session_row = Session(
+        scenario_id=scenario_row.scenario_id,
+        start_time=datetime.utcnow(),
+        status="In Progress"
+    )
+    db.add(session_row)
+    db.flush()
+
+    # Create Conversation row
+    conversation_row = Conversation(
+        session_id=session_row.session_id,
+        intent=scenario_key,
+        sentiment=request.initial_emotion,
+        resolution_status="Unresolved",
+        escalation_risk="Low",
+        created_at=datetime.utcnow()
+    )
+    db.add(conversation_row)
+    db.flush()
+
+    # Build initial state
+    start_state = initial_state(
+        persona=request.persona,
+        initial_emotion=request.initial_emotion,
+        issue_severity=request.issue_severity,
+        patience_level=request.patience_level
+    )
+
+    opening_message = scenario_data["opening_complaint"]
+
+    # Customer's initial opening message
+    customer_msg = Message(
+        conversation_id=conversation_row.conversation_id,
+        sender_type="Customer",
+        message_text=opening_message,
+        timestamp=datetime.utcnow(),
+        message_type="Text"
+    )
+    db.add(customer_msg)
+    db.flush()
+
+    logger.info("Task 3 customer message generated for session %s (turn 1)", session_row.session_id)
+
+    # Task 4 live analysis with failure isolation
+    analysis_resp = None
+    analysis_dict = None
+    try:
+        logger.info("Task 4 analysis started for session %s", session_row.session_id)
+        analysis_resp = analyze_customer_message(
+            session_id=session_row.session_id,
+            customer_message=opening_message,
+            db=db
+        )
+        if analysis_resp:
+            analysis_dict = analysis_resp.model_dump() if hasattr(analysis_resp, "model_dump") else analysis_resp
+            logger.info("Task 4 analysis completed for session %s", session_row.session_id)
+    except Exception as e:
+        logger.warning("Task 4 analysis gracefully bypassed on exception: %s", e)
+
+    # Task 5 Knowledge Recommendation with failure isolation
+    rec_result = None
+    rec_dict = None
+    try:
+        logger.info("Task 5 knowledge recommendation started for session %s (turn 1)", session_row.session_id)
+        rec_result = get_knowledge_recommendations(
+            query=opening_message,
+            session_id=session_row.session_id,
+            conversation_id=conversation_row.conversation_id,
+            analysis=analysis_resp or analysis_dict,
+            db=db,
+        )
+        if rec_result:
+            rec_dict = rec_result.model_dump()
+            logger.info("Task 5 recommendations retrieved for session %s: count=%d, no_relevant=%s",
+                        session_row.session_id, len(rec_result.recommendations), rec_result.no_relevant_information)
+    except Exception as e:
+        logger.warning("Task 5 knowledge recommendation gracefully bypassed on exception: %s", e)
+
+    # System state message to track current state without schema alterations
+    system_state_msg = Message(
+        conversation_id=conversation_row.conversation_id,
+        sender_type="AI",
+        message_text=json.dumps({
+            "persona": request.persona,
+            "scenario": scenario_key,
+            "state": start_state,
+            "analysis": analysis_dict,
+            "recommendations": rec_dict,
+        }),
+        timestamp=datetime.utcnow(),
+        message_type="System"
+    )
+    db.add(system_state_msg)
+
+    db.commit()
+    logger.info("Task 4 analysis and Task 5 recommendations persisted for session %s", session_row.session_id)
+
+    response_data = {
+        "session_id": session_row.session_id,
+        "conversation_id": conversation_row.conversation_id,
+        "customer_message": opening_message,
+        "state": start_state,
+        "turn": 1
+    }
+    if analysis_dict:
+        response_data["analysis"] = analysis_dict
+
+    if rec_dict:
+        response_data["recommendations"] = rec_dict.get("recommendations", [])
+        response_data["no_relevant_information"] = rec_dict.get("no_relevant_information", False)
+        response_data["contextual_query"] = rec_dict.get("contextual_query")
+        response_data["knowledge_recommendations"] = rec_dict
+    else:
+        response_data["recommendations"] = []
+        response_data["no_relevant_information"] = True
+
+    return response_data
+
+
+# --------------------------------------------------
+# Endpoint 2: Next Customer Turn
+# --------------------------------------------------
+
+@router.post("/message")
+def send_simulator_message(
+    request: SimulatorMessageRequest,
+    db: DBSession = Depends(get_db)
+):
+    if not request.agent_response or not request.agent_response.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Agent response cannot be empty or whitespace only."
+        )
+
+    # Lookup Session
+    session_row = (
+        db.query(Session)
+        .filter(Session.session_id == request.session_id)
+        .first()
+    )
+
+    if not session_row:
+        raise HTTPException(
+            status_code=404,
+            detail="Simulator session not found"
+        )
+
+    # Lookup Conversation
+    conversation_row = (
+        db.query(Conversation)
+        .filter(Conversation.session_id == session_row.session_id)
+        .first()
+    )
+
+    if not conversation_row:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found for session"
+        )
+
+    scenario_row = (
+        db.query(Scenario)
+        .filter(Scenario.scenario_id == session_row.scenario_id)
+        .first()
+    )
+
+    # Fetch ordered messages
+    all_messages = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation_row.conversation_id)
+        .order_by(Message.message_id.asc())
+        .all()
+    )
+
+    # Reconstruct current state, persona, and scenario from latest System message
+    current_state = None
+    persona = "calm"
+    scenario_key = scenario_row.category if scenario_row else "refund"
+
+    for m in reversed(all_messages):
+        if m.message_type == "System":
+            try:
+                payload = json.loads(m.message_text)
+                current_state = payload.get("state")
+                persona = payload.get("persona", persona)
+                scenario_key = payload.get("scenario", scenario_key)
+                break
+            except Exception:
+                pass
+
+    if not current_state:
+        current_state = initial_state(persona, "neutral", 3, 3)
+
+    # Filter dialogue history for prompt
+    dialogue_history = [
+        {
+            "sender_type": m.sender_type,
+            "message_text": m.message_text
+        }
+        for m in all_messages
+        if m.message_type != "System"
+    ]
+
+    # Persist agent's response
+    agent_msg = Message(
+        conversation_id=conversation_row.conversation_id,
+        sender_type="Support Agent",
+        message_text=request.agent_response,
+        timestamp=datetime.utcnow(),
+        message_type="Text"
+    )
+    db.add(agent_msg)
+    db.flush()
+
+    # Generate customer turn
+    turn_result = generate_customer_turn(
+        persona=persona,
+        scenario=scenario_key,
+        state=current_state,
+        conversation_history=dialogue_history,
+        agent_response=request.agent_response
+    )
+
+    customer_message = turn_result["customer_message"]
+    updated_state = turn_result["updated_state"]
+    is_res = turn_result["is_resolved"]
+    is_esc = turn_result["is_escalated"]
+
+    # Persist customer message
+    customer_msg_row = Message(
+        conversation_id=conversation_row.conversation_id,
+        sender_type="Customer",
+        message_text=customer_message,
+        timestamp=datetime.utcnow(),
+        message_type="Text"
+    )
+    db.add(customer_msg_row)
+    db.flush()
+
+    # Calculate turn count
+    customer_turns = sum(
+        1 for m in dialogue_history if m["sender_type"] == "Customer"
+    ) + 1
+
+    logger.info("Task 3 customer message generated for session %s (turn %s)", session_row.session_id, customer_turns)
+
+    # Task 4 Live Analysis with failure isolation
+    analysis_resp = None
+    analysis_dict = None
+    try:
+        logger.info("Task 4 analysis started for session %s (turn %s)", session_row.session_id, customer_turns)
+        analysis_resp = analyze_customer_message(
+            session_id=session_row.session_id,
+            customer_message=customer_message,
+            db=db
+        )
+        if analysis_resp:
+            analysis_dict = analysis_resp.model_dump() if hasattr(analysis_resp, "model_dump") else analysis_resp
+            logger.info("Task 4 analysis completed for session %s", session_row.session_id)
+    except Exception as e:
+        logger.warning("Task 4 turn analysis gracefully bypassed on exception: %s", e)
+
+    # Task 5 Knowledge Recommendation with failure isolation
+    rec_result = None
+    rec_dict = None
+    try:
+        logger.info("Task 5 knowledge recommendation started for session %s (turn %s)", session_row.session_id, customer_turns)
+        rec_result = get_knowledge_recommendations(
+            query=customer_message,
+            session_id=session_row.session_id,
+            conversation_id=conversation_row.conversation_id,
+            analysis=analysis_resp or analysis_dict,
+            db=db,
+        )
+        if rec_result:
+            rec_dict = rec_result.model_dump()
+            logger.info("Task 5 recommendations retrieved for session %s: count=%d, no_relevant=%s",
+                        session_row.session_id, len(rec_result.recommendations), rec_result.no_relevant_information)
+    except Exception as e:
+        logger.warning("Task 5 knowledge recommendation gracefully bypassed on exception: %s", e)
+
+    # Persist updated state in a System message row
+    system_state_row = Message(
+        conversation_id=conversation_row.conversation_id,
+        sender_type="AI",
+        message_text=json.dumps({
+            "persona": persona,
+            "scenario": scenario_key,
+            "state": updated_state,
+            "analysis": analysis_dict,
+            "recommendations": rec_dict,
+        }),
+        timestamp=datetime.utcnow(),
+        message_type="System"
+    )
+    db.add(system_state_row)
+
+    # Update session and conversation status if resolved or escalated
+    if is_res:
+        session_row.status = "Completed"
+        session_row.end_time = datetime.utcnow()
+        conversation_row.resolution_status = "Resolved"
+    elif is_esc:
+        session_row.status = "Completed"
+        session_row.end_time = datetime.utcnow()
+        conversation_row.escalation_risk = "High"
+
+    db.commit()
+    logger.info("Task 4 analysis and Task 5 recommendations persisted for session %s", session_row.session_id)
+
+    response_data = {
+        "session_id": session_row.session_id,
+        "conversation_id": conversation_row.conversation_id,
+        "customer_message": customer_message,
+        "state": updated_state,
+        "turn": customer_turns,
+        "is_resolved": is_res,
+        "is_escalated": is_esc
+    }
+    if analysis_dict:
+        response_data["analysis"] = analysis_dict
+
+    if rec_dict:
+        response_data["recommendations"] = rec_dict.get("recommendations", [])
+        response_data["no_relevant_information"] = rec_dict.get("no_relevant_information", False)
+        response_data["contextual_query"] = rec_dict.get("contextual_query")
+        response_data["knowledge_recommendations"] = rec_dict
+    else:
+        response_data["recommendations"] = []
+        response_data["no_relevant_information"] = True
+
+    return response_data
+
+
+# --------------------------------------------------
+# Endpoint 3: History
+# --------------------------------------------------
+
+@router.get("/{session_id}/history")
+def get_simulator_history(
+
+    session_id: int,
+
+    db: DBSession = Depends(get_db)
+
+):
+    session_row = (
+        db.query(Session)
+        .filter(Session.session_id == session_id)
+        .first()
+    )
+
+    if not session_row:
+        raise HTTPException(
+            status_code=404,
+            detail="Simulator session not found"
+        )
+
+    conversation_row = (
+        db.query(Conversation)
+        .filter(Conversation.session_id == session_id)
+        .first()
+    )
+
+    if not conversation_row:
+        return {
+            "session_id": session_id,
+            "status": session_row.status,
+            "messages": []
+        }
+
+    # Retrieve only dialogue messages (excluding internal System state rows)
+    messages = (
+        db.query(Message)
+        .filter(
+            Message.conversation_id == conversation_row.conversation_id,
+            Message.message_type != "System"
+        )
+        .order_by(Message.message_id.asc())
+        .all()
+    )
+
+    return {
+        "session_id": session_id,
+        "status": session_row.status,
+        "messages": [
+            {
+                "message_id": message.message_id,
+                "sender_type": message.sender_type,
+                "message_text": message.message_text,
+                "message_type": message.message_type,
+                "timestamp": message.timestamp
+            }
+            for message in messages
+        ]
+    }

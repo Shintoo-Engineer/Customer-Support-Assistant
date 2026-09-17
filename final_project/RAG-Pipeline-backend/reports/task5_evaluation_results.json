@@ -1,0 +1,2523 @@
+{
+  "evaluation_summary": {
+    "timestamp": "2026-09-16T15:42:31.418548Z",
+    "scenarios_evaluated": 16,
+    "turns_evaluated": 30,
+    "precision_at_1": 0.9,
+    "precision_at_3": 0.8778,
+    "precision_at_5": 0.8467,
+    "recall_at_3": 0.8733,
+    "recall_at_5": 0.9667,
+    "mrr": 0.9333,
+    "ndcg_at_3": 0.8622,
+    "ndcg_at_5": 0.9125,
+    "out_of_domain_queries": 3,
+    "false_positive_rate": 0.3333,
+    "safe_no_result_rate": 0.6667,
+    "total_recommendations_returned": 134,
+    "duplicate_recommendations_count": 0,
+    "duplicate_recommendation_rate": 0.0,
+    "missing_sources_count": 0,
+    "missing_source_rate": 0.0,
+    "fabricated_sources_count": 0,
+    "simulator_persona_consistency_rate": 0.9667,
+    "simulator_context_retention_rate": 0.9667,
+    "simulator_response_variety_rate": 1.0
+  },
+  "scenario_results": [
+    {
+      "scenario_id": "S01",
+      "scenario_name": "Delayed Order Status Inquiry",
+      "domain": "delivery_delay",
+      "persona": "frustrated",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 0.8,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 0.5191
+    },
+    {
+      "scenario_id": "S02",
+      "scenario_name": "Standard Refund Request Within Window",
+      "domain": "refund",
+      "persona": "calm",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 1.0,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S03",
+      "scenario_name": "Checkout Payment Decline Error",
+      "domain": "payment_failure",
+      "persona": "confused",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 0.8334,
+      "avg_p5": 0.9,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S04",
+      "scenario_name": "Account Login Lockout & Password Reset",
+      "domain": "login_account_issue",
+      "persona": "impatient",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 1.0,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S05",
+      "scenario_name": "Subscription Auto-Renewal Cancellation",
+      "domain": "cancellation",
+      "persona": "polite",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 0.9,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S06",
+      "scenario_name": "Defective Product Return & Replacement",
+      "domain": "product_replacement",
+      "persona": "calm",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 0.8334,
+      "avg_p5": 0.9,
+      "avg_mrr": 0.75,
+      "avg_ndcg5": 0.9572
+    },
+    {
+      "scenario_id": "S07",
+      "scenario_name": "Angry Customer Overcharged on Subscription",
+      "domain": "frustrated_angry_customer",
+      "persona": "angry",
+      "turns_count": 3,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 0.7778,
+      "avg_p5": 0.8667,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 0.951
+    },
+    {
+      "scenario_id": "S08",
+      "scenario_name": "Missing Order Reference Lookup",
+      "domain": "delivery_delay",
+      "persona": "confused",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 0.6667,
+      "avg_p5": 0.4,
+      "avg_mrr": 0.75,
+      "avg_ndcg5": 0.8467
+    },
+    {
+      "scenario_id": "S09",
+      "scenario_name": "Missing Password Reset Verification Email",
+      "domain": "login_account_issue",
+      "persona": "confused",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 1.0,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S10",
+      "scenario_name": "Repeated Payment Failures at Checkout",
+      "domain": "payment_failure",
+      "persona": "frustrated",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 0.6666,
+      "avg_p5": 0.6,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 0.9386
+    },
+    {
+      "scenario_id": "S11",
+      "scenario_name": "Digital Product Refund for Technical Issue",
+      "domain": "refund",
+      "persona": "calm",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 1.0,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S12",
+      "scenario_name": "Login Problems & Browser Cache Troubleshooting",
+      "domain": "login_account_issue",
+      "persona": "calm",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 0.9,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S13",
+      "scenario_name": "Refund Request Outside 15-Day Policy Window",
+      "domain": "refund",
+      "persona": "impatient",
+      "turns_count": 2,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 1.0,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S14",
+      "scenario_name": "Out-of-Domain Query: Astrophysics Gravitational Waves",
+      "domain": "out_of_domain",
+      "persona": "calm",
+      "turns_count": 1,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 1.0,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    },
+    {
+      "scenario_id": "S15",
+      "scenario_name": "Out-of-Domain Query: Geography Capital Cities",
+      "domain": "out_of_domain",
+      "persona": "polite",
+      "turns_count": 1,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 0.0,
+      "avg_p5": 0.0,
+      "avg_mrr": 0.0,
+      "avg_ndcg5": 0.0
+    },
+    {
+      "scenario_id": "S16",
+      "scenario_name": "Out-of-Domain Query: Culinary Baking Recipe",
+      "domain": "out_of_domain",
+      "persona": "calm",
+      "turns_count": 1,
+      "task3_status": "PASS",
+      "task4_status": "PASS",
+      "task5_status": "PASS",
+      "avg_p3": 1.0,
+      "avg_p5": 1.0,
+      "avg_mrr": 1.0,
+      "avg_ndcg5": 1.0
+    }
+  ],
+  "turn_details": [
+    {
+      "scenario_id": "S01",
+      "turn": 1,
+      "customer_message": "My order #ORD-78219 was scheduled for guaranteed delivery 3 days ago, but the tracking hasn't updated and the package still hasn't arrived. Where is my item?",
+      "persona": "frustrated",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "delivery_issue",
+        "emotion": "frustrated",
+        "sentiment": "negative",
+        "frustration_level": 7,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "medium",
+        "confidence": 0.92,
+        "session_id": 90,
+        "conversation_id": 90,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:13.271081+00:00"
+      },
+      "contextual_query": "My order #ORD-78219 was scheduled for guaranteed delivery 3 days ago, but the tracking hasn't updated and the package still hasn't arrived. Where is my item? shipping arrival",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4303
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4154
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4154
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 3 to 5 business days after approval. If the original payment method is unavailable, support may request an alternate verified payment method.",
+          "source": "chunk:doc_25_v4_p2_c1 | document:Regression Refund Policy | v4 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4146
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 3 to 5 business days after approval. If the original payment method is unavailable, support may request an alternate verified payment method.",
+          "source": "chunk:doc_29_v1_p2_c1 | document:Test Refund Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4146
+        }
+      ],
+      "grades": [
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 0.6,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 0.4355,
+        "ndcg_at_5": 0.4355
+      }
+    },
+    {
+      "scenario_id": "S01",
+      "turn": 2,
+      "customer_message": "Where is it now? I really need this package before the weekend.",
+      "persona": "frustrated",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "delivery_issue",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "improving",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 90,
+        "conversation_id": 90,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:13.829024+00:00"
+      },
+      "contextual_query": "Where is it now? I really need this package before the weekend. order ord 78219 scheduled guaranteed delivery shipping tracking arrival",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4016
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4016
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4004
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4004
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.3995
+        }
+      ],
+      "grades": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 0.4355,
+        "ndcg_at_5": 0.6026
+      }
+    },
+    {
+      "scenario_id": "S02",
+      "turn": 1,
+      "customer_message": "Hi, I purchased a software license 5 days ago with order reference #ORD-55410, but our company decided on another tool. I would like to request a full refund.",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 91,
+        "conversation_id": 91,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:14.440494+00:00"
+      },
+      "contextual_query": "Hi, I purchased a software license 5 days ago with order reference #ORD-55410, but our company decided on another tool. I would like to request a full refund. policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.5646
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.5646
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5363
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5363
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5317
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 0.6,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S02",
+      "turn": 2,
+      "customer_message": "Thank you. How long does the refund take to appear back on my credit card?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "payment_issue",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 1,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 91,
+        "conversation_id": 91,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:14.951681+00:00"
+      },
+      "contextual_query": "Thank you. How long does the refund take to appear back on my credit card? payment checkout billing",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.6235
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.6235
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 3 to 5 business days after approval. If the original payment method is unavailable, support may request an alternate verified payment method.",
+          "source": "chunk:doc_25_v4_p2_c1 | document:Regression Refund Policy | v4 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.6229
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 3 to 5 business days after approval. If the original payment method is unavailable, support may request an alternate verified payment method.",
+          "source": "chunk:doc_29_v1_p2_c1 | document:Test Refund Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.6229
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 5 to 7 business days after approval.",
+          "source": "chunk:doc_41_v2_p2_c1 | document:QA Test Refund Policy | v2 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.621
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 0.6,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S03",
+      "turn": 1,
+      "customer_message": "I am trying to pay for my subscription renewal, but my payment keeps failing at checkout with an error. My card has enough funds, so why won't it go through?",
+      "persona": "confused",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "payment_issue",
+        "emotion": "neutral",
+        "sentiment": "negative",
+        "frustration_level": 4,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.78,
+        "session_id": 92,
+        "conversation_id": 92,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:15.464248+00:00"
+      },
+      "contextual_query": "I am trying to pay for my subscription renewal, but my payment keeps failing at checkout with an error. My card has enough funds, so why won't it go through? billing",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.5524
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.426
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.426
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4227
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4199
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        0,
+        2,
+        1
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 0.6667,
+        "p_at_5": 0.8,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S03",
+      "turn": 2,
+      "customer_message": "Wait, I tried again and it still failed... should I contact my bank or try another card?",
+      "persona": "confused",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "payment_issue",
+        "emotion": "neutral",
+        "sentiment": "negative",
+        "frustration_level": 6,
+        "satisfaction_trend": "declining",
+        "escalation_risk": "medium",
+        "confidence": 0.78,
+        "session_id": 92,
+        "conversation_id": 92,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:16.077782+00:00"
+      },
+      "contextual_query": "Wait, I tried again and it still failed... should I contact my bank or try another card? trying pay subscription renewal payment keeps checkout billing error",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.5777
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4487
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4487
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4472
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.44
+        }
+      ],
+      "grades": [
+        2,
+        1,
+        1,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 0.8443,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S04",
+      "turn": 1,
+      "customer_message": "I cannot log in to my account and I have an urgent client demo in 20 minutes! How do I reset my password immediately?",
+      "persona": "impatient",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "account_issue",
+        "emotion": "frustrated",
+        "sentiment": "negative",
+        "frustration_level": 8,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "high",
+        "confidence": 0.92,
+        "session_id": 93,
+        "conversation_id": 93,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:16.794997+00:00"
+      },
+      "contextual_query": "I cannot log in to my account and I have an urgent client demo in 20 minutes! How do I reset my password immediately? login credentials access",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5577
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5577
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4802
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4183
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.392
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        1
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S04",
+      "turn": 2,
+      "customer_message": "I clicked it 5 minutes ago and still haven't received the reset email. Where is it?",
+      "persona": "impatient",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "delivery_issue",
+        "emotion": "frustrated",
+        "sentiment": "negative",
+        "frustration_level": 9,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "high",
+        "confidence": 0.92,
+        "session_id": 93,
+        "conversation_id": 93,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:17.409451+00:00"
+      },
+      "contextual_query": "I clicked it 5 minutes ago and still haven't received the reset email. Where is it? cannot log account urgent client demo delivery shipping tracking",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5187
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5187
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4696
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4214
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4092
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        1
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S05",
+      "turn": 1,
+      "customer_message": "Hello, could you please guide me on how to cancel my monthly subscription so that I am not charged on the next renewal date?",
+      "persona": "polite",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "confused",
+        "sentiment": "negative",
+        "frustration_level": 5,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "medium",
+        "confidence": 0.88,
+        "session_id": 94,
+        "conversation_id": 94,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:19.456407+00:00"
+      },
+      "contextual_query": "Hello, could you please guide me on how to cancel my monthly subscription so that I am not charged on the next renewal date? refund policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.5395
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.5395
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4577
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4577
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4547
+        }
+      ],
+      "grades": [
+        2,
+        1,
+        2,
+        0,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 0.8,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S05",
+      "turn": 2,
+      "customer_message": "Thank you so much! Will I still have access to my features until the end of this billing cycle?",
+      "persona": "polite",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "cancellation",
+        "emotion": "happy",
+        "sentiment": "positive",
+        "frustration_level": 0,
+        "satisfaction_trend": "improving",
+        "escalation_risk": "low",
+        "confidence": 0.88,
+        "session_id": 94,
+        "conversation_id": 94,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:20.071115+00:00"
+      },
+      "contextual_query": "Thank you so much! Will I still have access to my features until the end of this billing cycle? guide how cancel monthly subscription not order cancellation",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4657
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4657
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.422
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.422
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4162
+        }
+      ],
+      "grades": [
+        2,
+        1,
+        1,
+        1,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 0.8443,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S06",
+      "turn": 1,
+      "customer_message": "I received my hardware package yesterday under order #ORD-99210, but the power adapter is defective. Can I return this for a replacement or refund?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "return_exchange",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 95,
+        "conversation_id": 95,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:20.553004+00:00"
+      },
+      "contextual_query": "I received my hardware package yesterday under order #ORD-99210, but the power adapter is defective. Can I return this for a replacement or refund? item exchange",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4663
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4663
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4642
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4642
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 3 to 5 business days after approval. If the original payment method is unavailable, support may request an alternate verified payment method.",
+          "source": "chunk:doc_25_v4_p2_c1 | document:Regression Refund Policy | v4 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4636
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S06",
+      "turn": 2,
+      "customer_message": "Understood. Where do I send the package and how do I get a return shipping label?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "general_inquiry",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 95,
+        "conversation_id": 95,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:21.097462+00:00"
+      },
+      "contextual_query": "Understood. Where do I send the package and how do I get a return shipping label? received hardware yesterday order ord 99210 customer support faq",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4233
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4203
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4203
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4181
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4181
+        }
+      ],
+      "grades": [
+        0,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 0.0,
+        "p_at_3": 0.6667,
+        "p_at_5": 0.8,
+        "r_at_3": 0.6667,
+        "r_at_5": 1.0,
+        "rr": 0.5,
+        "ndcg_at_3": 0.5307,
+        "ndcg_at_5": 0.9144
+      }
+    },
+    {
+      "scenario_id": "S07",
+      "turn": 1,
+      "customer_message": "This is completely unacceptable! I canceled my membership last week and you just charged my credit card $49.99 today! Refund my money right now or I will contact my bank and dispute the charge!",
+      "persona": "angry",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "angry",
+        "sentiment": "negative",
+        "frustration_level": 10,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "high",
+        "confidence": 0.96,
+        "session_id": 96,
+        "conversation_id": 96,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:21.710450+00:00"
+      },
+      "contextual_query": "This is completely unacceptable! I canceled my membership last week and you just charged my credit card $49.99 today! Refund my money right now or I will contact my bank and dispute the charge! policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4827
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4827
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4515
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4515
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4504
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S07",
+      "turn": 2,
+      "customer_message": "I don't want excuses, I want my $49.99 back! Did you process the refund or not?",
+      "persona": "angry",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "improving",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 96,
+        "conversation_id": 96,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:22.243810+00:00"
+      },
+      "contextual_query": "I don't want excuses, I want my $49.99 back! Did you process the refund or not? policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5564
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5564
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_22_v1_p1_c1 | document:Regression Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5553
+        },
+        {
+          "title": "Refund Policy Typo Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_30_v1_p1_c1 | document:Refund Policy Typo Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5553
+        },
+        {
+          "title": "Live Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_39_v1_p1_c1 | document:Live Test Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5553
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S07",
+      "turn": 3,
+      "customer_message": "Send me the transaction confirmation email right now so I have written proof.",
+      "persona": "angry",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "payment_issue",
+        "emotion": "angry",
+        "sentiment": "negative",
+        "frustration_level": 10,
+        "satisfaction_trend": "declining",
+        "escalation_risk": "high",
+        "confidence": 0.96,
+        "session_id": 96,
+        "conversation_id": 96,
+        "message_id": null,
+        "turn_number": 3,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:23.248726+00:00"
+      },
+      "contextual_query": "Send me the transaction confirmation email right now so I have written proof. payment checkout billing",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.5111
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4387
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4387
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4176
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4176
+        }
+      ],
+      "grades": [
+        2,
+        0,
+        0,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 0.3333,
+        "p_at_5": 0.6,
+        "r_at_3": 0.3333,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 0.4693,
+        "ndcg_at_5": 0.8529
+      }
+    },
+    {
+      "scenario_id": "S08",
+      "turn": 1,
+      "customer_message": "I bought something on your website yesterday but I don't know where to find my order reference number to track it. Where can I find my order reference?",
+      "persona": "confused",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "delivery_issue",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.86,
+        "session_id": 97,
+        "conversation_id": 97,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:23.964503+00:00"
+      },
+      "contextual_query": "I bought something on your website yesterday but I don't know where to find my order reference number to track it. Where can I find my order reference? delivery shipping tracking",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.479
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.479
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4124
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 5 to 7 business days after approval.",
+          "source": "chunk:doc_24_v3_p2_c1 | document:Regression Refund Policy | v3 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.3957
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 5 to 7 business days after approval.",
+          "source": "chunk:doc_41_v2_p2_c1 | document:QA Test Refund Policy | v2 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.3957
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 0.6667,
+        "p_at_5": 0.4,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S08",
+      "turn": 2,
+      "customer_message": "Oh I see it now, #ORD-44910! How do I use this number to check if it has shipped?",
+      "persona": "confused",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "general_inquiry",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 97,
+        "conversation_id": 97,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:24.576856+00:00"
+      },
+      "contextual_query": "Oh I see it now, #ORD-44910! How do I use this number to check if it has shipped? bought something website yesterday don know customer support faq",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.465
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4244
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4244
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4221
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4125
+        }
+      ],
+      "grades": [
+        0,
+        2,
+        2,
+        0,
+        0
+      ],
+      "metrics": {
+        "p_at_1": 0.0,
+        "p_at_3": 0.6667,
+        "p_at_5": 0.4,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 0.5,
+        "ndcg_at_3": 0.6934,
+        "ndcg_at_5": 0.6934
+      }
+    },
+    {
+      "scenario_id": "S09",
+      "turn": 1,
+      "customer_message": "I tried resetting my account password, but I did not receive the reset email after clicking the button. What should I do?",
+      "persona": "confused",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "account_issue",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 98,
+        "conversation_id": 98,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:24.988194+00:00"
+      },
+      "contextual_query": "I tried resetting my account password, but I did not receive the reset email after clicking the button. What should I do? login credentials access",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5888
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5888
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4652
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4118
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4099
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S09",
+      "turn": 2,
+      "customer_message": "I checked my spam folder and nothing is there either. Can you verify my email address on file?",
+      "persona": "confused",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "account_issue",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.86,
+        "session_id": 98,
+        "conversation_id": 98,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:25.509980+00:00"
+      },
+      "contextual_query": "I checked my spam folder and nothing is there either. Can you verify my email address on file? tried resetting account password not receive login credentials access",
+      "recommendations_count": 4,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5314
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5314
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4638
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4124
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S10",
+      "turn": 1,
+      "customer_message": "For a failed payment, what does your policy say? My card was declined twice even though the balance is fine. Why are checkout errors happening?",
+      "persona": "frustrated",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "payment_issue",
+        "emotion": "neutral",
+        "sentiment": "negative",
+        "frustration_level": 4,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.78,
+        "session_id": 99,
+        "conversation_id": 99,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:26.113006+00:00"
+      },
+      "contextual_query": "For a failed payment, what does your policy say? My card was declined twice even though the balance is fine. Why are checkout errors happening? billing",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.6296
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4285
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4285
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_27_v1_p2_c1 | document:Customer Support FAQ | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4282
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Page 2: Orders & Payments Q: Where can I find my order reference? A: Open the Orders section in your account. Each order displays a unique order reference. Q: How long does a refund take? A: Under the current refund policy, approved refunds normally take 3 to 5 business days to reach the original payment method. Q: Can I cancel my subscription? A: Yes. You can cancel from account settings. Cancellation prevents future renewals; refund eligibility is handled separately.",
+          "source": "chunk:doc_42_v1_p2_c1 | document:QA FAQ Document | v1 | p2",
+          "document_type": "faq",
+          "relevance_score": 0.4282
+        }
+      ],
+      "grades": [
+        2,
+        0,
+        0,
+        2,
+        0
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 0.3333,
+        "p_at_5": 0.4,
+        "r_at_3": 0.5,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 0.6131,
+        "ndcg_at_5": 0.8772
+      }
+    },
+    {
+      "scenario_id": "S10",
+      "turn": 2,
+      "customer_message": "I verified the details and retried, but it failed again! What is the next troubleshooting step?",
+      "persona": "frustrated",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "general_inquiry",
+        "emotion": "neutral",
+        "sentiment": "negative",
+        "frustration_level": 6,
+        "satisfaction_trend": "declining",
+        "escalation_risk": "medium",
+        "confidence": 0.82,
+        "session_id": 99,
+        "conversation_id": 99,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:26.727535+00:00"
+      },
+      "contextual_query": "I verified the details and retried, but it failed again! What is the next troubleshooting step? payment policy say card declined twice customer support faq",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.5893
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4648
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4581
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4581
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Page 2: Refund Process Customers submit a refund request through the support portal. Support verifies the order and eligibility before approval. Approved refunds are returned to the original payment method. Processing normally takes 3 to 5 business days after approval. If the original payment method is unavailable, support may request an alternate verified payment method.",
+          "source": "chunk:doc_25_v4_p2_c1 | document:Regression Refund Policy | v4 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4374
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        1,
+        1,
+        0
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 0.8,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S11",
+      "turn": 1,
+      "customer_message": "Are digital products eligible for a refund? I purchased a downloadable plugin yesterday that crashes on launch and cannot be used.",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 100,
+        "conversation_id": 100,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:27.250965+00:00"
+      },
+      "contextual_query": "Are digital products eligible for a refund? I purchased a downloadable plugin yesterday that crashes on launch and cannot be used. policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5648
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5648
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5644
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5644
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_22_v1_p1_c1 | document:Regression Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5626
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 0.75,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S11",
+      "turn": 2,
+      "customer_message": "Great, what proof do I need to submit with my refund request?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 100,
+        "conversation_id": 100,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:27.559268+00:00"
+      },
+      "contextual_query": "Great, what proof do I need to submit with my refund request? policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5515
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_41_v2_p1_c1 | document:QA Test Refund Policy | v2 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5515
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_22_v1_p1_c1 | document:Regression Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5458
+        },
+        {
+          "title": "Refund Policy Typo Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_30_v1_p1_c1 | document:Refund Policy Typo Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5458
+        },
+        {
+          "title": "Live Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_39_v1_p1_c1 | document:Live Test Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5458
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 0.75,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S12",
+      "turn": 1,
+      "customer_message": "If a customer cannot log in, what are the recommended troubleshooting steps in your technical guide?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "account_issue",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 101,
+        "conversation_id": 101,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:28.161270+00:00"
+      },
+      "contextual_query": "If a customer cannot log in, what are the recommended troubleshooting steps in your technical guide? account login password",
+      "recommendations_count": 4,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.598
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5367
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.5367
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4822
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        1
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S12",
+      "turn": 2,
+      "customer_message": "If the account still remains inaccessible after that, what is the escalation procedure?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "general_inquiry",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 101,
+        "conversation_id": 101,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:28.571668+00:00"
+      },
+      "contextual_query": "If the account still remains inaccessible after that, what is the escalation procedure? cannot log recommended troubleshooting steps technical customer support faq",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5429
+        },
+        {
+          "title": "Customer Support FAQ",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_27_v1_p1_c1 | document:Customer Support FAQ | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4997
+        },
+        {
+          "title": "QA FAQ Document",
+          "content": "Customer Support FAQ Document Type: FAQ | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Account & Login Q: How do I reset my password? A: Select 'Forgot Password' on the login screen and follow the verification instructions sent to your registered email. Q: I did not receive the reset email. A: Check spam or junk folders first. If the email is still missing after 10 minutes, contact support.",
+          "source": "chunk:doc_42_v1_p1_c1 | document:QA FAQ Document | v1 | p1",
+          "document_type": "faq",
+          "relevance_score": 0.4997
+        },
+        {
+          "title": "Test Policy Doc",
+          "content": "Page 2: Payment and Checkout Errors For a failed payment, ask the customer to verify card details and retry once. Do not request or record the customer's full card number, CVV, or password. If money was debited but the order was not created, collect the transaction reference and escalate to the payment support queue.",
+          "source": "chunk:doc_28_v1_p2_c1 | document:Test Policy Doc | v1 | p2",
+          "document_type": "policy",
+          "relevance_score": 0.4758
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.4124
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        1,
+        0
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 0.8,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S13",
+      "turn": 1,
+      "customer_message": "I bought an item 45 days ago and I want a refund now. Can a refund be denied when the purchase is outside the eligible period?",
+      "persona": "impatient",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 102,
+        "conversation_id": 102,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:29.028142+00:00"
+      },
+      "contextual_query": "I bought an item 45 days ago and I want a refund now. Can a refund be denied when the purchase is outside the eligible period? policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_25_v4_p1_c1 | document:Regression Refund Policy | v4 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5601
+        },
+        {
+          "title": "Test Refund Policy Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 3.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The customer must provide the registered email address and order reference. A refund may be denied when the purchase is outside the eligible period. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_29_v1_p1_c1 | document:Test Refund Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5601
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_22_v1_p1_c1 | document:Regression Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5542
+        },
+        {
+          "title": "Refund Policy Typo Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_30_v1_p1_c1 | document:Refund Policy Typo Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5542
+        },
+        {
+          "title": "Live Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_39_v1_p1_c1 | document:Live Test Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5542
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S13",
+      "turn": 2,
+      "customer_message": "Can an exception be made by a supervisor if the product was never opened?",
+      "persona": "impatient",
+      "persona_consistent": false,
+      "context_retained": false,
+      "analysis": {
+        "intent": "refund",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.86,
+        "session_id": 102,
+        "conversation_id": 102,
+        "message_id": null,
+        "turn_number": 2,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:29.699070+00:00"
+      },
+      "contextual_query": "Can an exception be made by a supervisor if the product was never opened? refund policy reimbursement",
+      "recommendations_count": 5,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_22_v1_p1_c1 | document:Regression Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.537
+        },
+        {
+          "title": "Refund Policy Typo Doc",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_30_v1_p1_c1 | document:Refund Policy Typo Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.537
+        },
+        {
+          "title": "Live Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_39_v1_p1_c1 | document:Live Test Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.537
+        },
+        {
+          "title": "QA Test Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 15 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund only when the customer can demonstrate a technical issue that prevents normal use.",
+          "source": "chunk:doc_40_v1_p1_c1 | document:QA Test Refund Policy | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.537
+        },
+        {
+          "title": "Regression Refund Policy",
+          "content": "Refund & Return Policy Document Type: POLICY | Version: 2.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Eligibility Customers may request a refund within 30 calendar days of the original purchase date. The product must be in usable condition and the customer must provide the registered email address and order reference. Digital products are eligible for a refund when a verified technical issue prevents normal use and support cannot resolve the issue.",
+          "source": "chunk:doc_24_v3_p1_c1 | document:Regression Refund Policy | v3 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.5368
+        }
+      ],
+      "grades": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S14",
+      "turn": 1,
+      "customer_message": "How do gravitational waves propagate across cosmic distances through curved spacetime according to general relativity?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "general_inquiry",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.86,
+        "session_id": 103,
+        "conversation_id": 103,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:30.311256+00:00"
+      },
+      "contextual_query": "How do gravitational waves propagate across cosmic distances through curved spacetime according to general relativity? customer support faq",
+      "recommendations_count": 0,
+      "no_relevant_information": true,
+      "recommendations": [],
+      "grades": [],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    },
+    {
+      "scenario_id": "S15",
+      "turn": 1,
+      "customer_message": "Could you please tell me the capital city of Australia and what timezone Canberra operates in?",
+      "persona": "polite",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "general_inquiry",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.86,
+        "session_id": 104,
+        "conversation_id": 104,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:30.925643+00:00"
+      },
+      "contextual_query": "Could you please tell me the capital city of Australia and what timezone Canberra operates in? customer support faq",
+      "recommendations_count": 1,
+      "no_relevant_information": false,
+      "recommendations": [
+        {
+          "title": "Test Policy Doc",
+          "content": "Technical Support Troubleshooting Guide Document Type: SUPPORT_DOCUMENT | Version: 1.0 | Customer: Demo Support Co. This is synthetic dummy data created for the Support Knowledge Base Ingestion & RAG Pipeline task. Page 1: Login Problems If a customer cannot log in, first confirm that the registered email address is correct. Ask the customer to reset the password and retry after clearing browser cache or using a private browsing window. If the account remains inaccessible, escalate with the account email, timestamp, and error message.",
+          "source": "chunk:doc_28_v1_p1_c1 | document:Test Policy Doc | v1 | p1",
+          "document_type": "policy",
+          "relevance_score": 0.3802
+        }
+      ],
+      "grades": [
+        0
+      ],
+      "metrics": {
+        "p_at_1": 0.0,
+        "p_at_3": 0.0,
+        "p_at_5": 0.0,
+        "r_at_3": 0.0,
+        "r_at_5": 0.0,
+        "rr": 0.0,
+        "ndcg_at_3": 0.0,
+        "ndcg_at_5": 0.0
+      }
+    },
+    {
+      "scenario_id": "S16",
+      "turn": 1,
+      "customer_message": "What is the recommended oven temperature and baking time for traditional sourdough bread with high hydration dough?",
+      "persona": "calm",
+      "persona_consistent": true,
+      "context_retained": true,
+      "analysis": {
+        "intent": "general_inquiry",
+        "emotion": "neutral",
+        "sentiment": "neutral",
+        "frustration_level": 2,
+        "satisfaction_trend": "stable",
+        "escalation_risk": "low",
+        "confidence": 0.9,
+        "session_id": 105,
+        "conversation_id": 105,
+        "message_id": null,
+        "turn_number": 1,
+        "analysis_source": "fallback",
+        "analysis_timestamp": "2026-09-16T15:42:31.350130+00:00"
+      },
+      "contextual_query": "What is the recommended oven temperature and baking time for traditional sourdough bread with high hydration dough? customer support faq",
+      "recommendations_count": 0,
+      "no_relevant_information": true,
+      "recommendations": [],
+      "grades": [],
+      "metrics": {
+        "p_at_1": 1.0,
+        "p_at_3": 1.0,
+        "p_at_5": 1.0,
+        "r_at_3": 1.0,
+        "r_at_5": 1.0,
+        "rr": 1.0,
+        "ndcg_at_3": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    }
+  ]
+}

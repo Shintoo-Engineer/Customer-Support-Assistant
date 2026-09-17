@@ -1,0 +1,307 @@
+{
+  "total": 30,
+  "passed": 28,
+  "failed": 2,
+  "results": [
+    {
+      "id": "TC-001",
+      "name": "Root endpoint returns welcome message",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'message': 'AI Coaching Agent API is running'}"
+    },
+    {
+      "id": "TC-002",
+      "name": "Swagger OpenAPI schema loads",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/openapi.json",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'openapi': '3.1.0', 'info': {'title': 'AI Coaching Agent', 'description': 'Support Knowledge Base and RAG Pipeline', 'version': '1.0.0'}, 'paths': {'/documents/upload': {'post': {'tags': ['Documents'"
+    },
+    {
+      "id": "TC-003",
+      "name": "Upload refund_policy_v1.pdf (admin, policy)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/documents/upload",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'message': 'Document uploaded and processed successfully', 'document': {'document_id': 43, 'document_name': 'QA Test Refund Policy', 'document_type': 'policy', 'version': 3, 'status': 'active', 'file"
+    },
+    {
+      "id": "TC-004",
+      "name": "Upload refund_policy_v2.pdf (version auto-increment)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/documents/upload",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'message': 'Document uploaded and processed successfully', 'document': {'document_id': 44, 'document_name': 'QA Test Refund Policy', 'document_type': 'policy', 'version': 4, 'status': 'active', 'file"
+    },
+    {
+      "id": "TC-005",
+      "name": "Upload FAQ as support_agent (faq type)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/documents/upload",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'message': 'Document uploaded and processed successfully', 'document': {'document_id': 45, 'document_name': 'QA FAQ Document', 'document_type': 'faq', 'version': 2, 'status': 'active', 'filename': 'Q"
+    },
+    {
+      "id": "TC-006",
+      "name": "RBAC: support_agent cannot upload policy (expect 403)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/documents/upload",
+      "status": 403,
+      "expected": 403,
+      "verdict": "PASS",
+      "response_summary": "{'detail': 'Only admin can upload policy documents.'}"
+    },
+    {
+      "id": "TC-007",
+      "name": "Reject non-PDF upload (expect 400)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/documents/upload",
+      "status": 400,
+      "expected": 400,
+      "verdict": "PASS",
+      "response_summary": "{'detail': 'Only PDF files are allowed.'}"
+    },
+    {
+      "id": "TC-008",
+      "name": "Reject invalid document_type (expect 400)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/documents/upload",
+      "status": 400,
+      "expected": 400,
+      "verdict": "PASS",
+      "response_summary": "{'detail': 'Invalid document type. Allowed types are: policy, faq, support.'}"
+    },
+    {
+      "id": "TC-009",
+      "name": "Version history shows correct versioning",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/documents/history/QA Test Refund Policy",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'document_name': 'QA Test Refund Policy', 'total_versions': 4, 'versions': [{'document_id': 44, 'version': 4, 'status': 'active', 'filename': 'QA_Test_Refund_Policy_v4.pdf', 'document_type': 'policy'"
+    },
+    {
+      "id": "TC-010",
+      "name": "GET /documents/ lists all uploaded docs",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/documents/",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'total_documents': 45, 'documents': [{'document_id': 35, 'document_name': 'Customer Support FAQ', 'document_type': 'faq', 'version': 2, 'status': 'active', 'filename': 'Customer_Support_FAQ_v2.pdf', "
+    },
+    {
+      "id": "TC-011",
+      "name": "Search: refund policy query",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/search/",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'query': 'How many days do I have to request a refund?', 'results': [{'chunk_id': 'test_refund_chunk_1', 'text': '\\nCustomers may request a refund within 15 calendar days\\nof the original purchase da"
+    },
+    {
+      "id": "TC-012",
+      "name": "Search: empty query (expect 400)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/search/",
+      "status": 400,
+      "expected": 400,
+      "verdict": "PASS",
+      "response_summary": "{'detail': 'Search query cannot be empty.'}"
+    },
+    {
+      "id": "TC-013",
+      "name": "RAG: ask about refund policy",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/rag/ask",
+      "status": 500,
+      "expected": 200,
+      "verdict": "FAIL",
+      "response_summary": "{'detail': \"RAG processing failed: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key not valid. Please pass a valid API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type"
+    },
+    {
+      "id": "TC-014",
+      "name": "RAG: empty question (expect 400)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/rag/ask",
+      "status": 400,
+      "expected": 400,
+      "verdict": "PASS",
+      "response_summary": "{'detail': 'Question cannot be empty.'}"
+    },
+    {
+      "id": "TC-015",
+      "name": "Chat: send message to new session",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/chat/message",
+      "status": 500,
+      "expected": 200,
+      "verdict": "FAIL",
+      "response_summary": "Internal Server Error"
+    },
+    {
+      "id": "TC-016",
+      "name": "Chat: retrieve session history",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/chat/qa_test_session/history",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'session_id': 'qa_test_session', 'messages': []}"
+    },
+    {
+      "id": "TC-017",
+      "name": "Support: technical issue",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/support/",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'status': 'success', 'issue_type': 'Technical Issue', 'support_response': 'For technical issues, please check your internet connection and try again. If the problem continues, please contact support."
+    },
+    {
+      "id": "TC-018",
+      "name": "Support: document upload issue",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/support/",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'status': 'success', 'issue_type': 'Document Upload', 'support_response': 'For document upload problems, make sure the file format is supported and the file is not too large. Please try uploading it "
+    },
+    {
+      "id": "TC-019",
+      "name": "Support: coaching help",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/support/",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'status': 'success', 'issue_type': 'Coaching Help', 'support_response': 'For coaching-related help, please describe your learning goal or the difficulty you are facing. Our AI Coaching system can gui"
+    },
+    {
+      "id": "TC-020",
+      "name": "Support: unknown issue type",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/support/",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'status': 'success', 'issue_type': 'Billing', 'support_response': 'Thank you for contacting Live Support. Your request has been received. Please provide more details about your issue for further assi"
+    },
+    {
+      "id": "TC-021",
+      "name": "Simulator: start angry/refund session",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/start",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'session_id': 16, 'conversation_id': 16, 'customer_message': 'Hi, I was charged $49.99 for a subscription renewal that I requested to cancel last week. I need a full refund issued back to my card imm"
+    },
+    {
+      "id": "TC-022",
+      "name": "Simulator: start polite/delayed_order session",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/start",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'session_id': 17, 'conversation_id': 17, 'customer_message': \"My order #ORD-78219 was scheduled for guaranteed delivery 3 days ago, but the tracking hasn't updated and the package still hasn't arrive"
+    },
+    {
+      "id": "TC-023",
+      "name": "Simulator: invalid persona (expect 400)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/start",
+      "status": 400,
+      "expected": 400,
+      "verdict": "PASS",
+      "response_summary": "{'detail': \"Invalid persona 'excited'. Must be one of: angry, calm, confused, frustrated, impatient, polite\"}"
+    },
+    {
+      "id": "TC-024",
+      "name": "Simulator: invalid scenario (expect 400)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/start",
+      "status": 400,
+      "expected": 400,
+      "verdict": "PASS",
+      "response_summary": "{'detail': \"Invalid scenario type 'shipping_damage'. Must be one of: account_issue, cancellation, delayed_order, payment_failure, refund\"}"
+    },
+    {
+      "id": "TC-025",
+      "name": "Simulator: empathetic agent response (angry session)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/message",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'session_id': 16, 'customer_message': 'This is completely unacceptable! Fix this right NOW.', 'state': {'frustration': 64, 'trust': 55, 'patience': 28, 'satisfaction': 41, 'escalation_intent': 51}, '"
+    },
+    {
+      "id": "TC-026",
+      "name": "Simulator: dismissive agent response (angry session)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/message",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'session_id': 16, 'customer_message': 'This is completely unacceptable! Fix this right NOW.', 'state': {'frustration': 100, 'trust': 13, 'patience': 0, 'satisfaction': 5, 'escalation_intent': 100}, '"
+    },
+    {
+      "id": "TC-027",
+      "name": "Simulator: helpful agent response (polite session)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/message",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'session_id': 17, 'customer_message': 'Hello, thank you for your time today. Could you please help me check on this?', 'state': {'frustration': 0, 'trust': 80, 'patience': 100, 'satisfaction': 64, 'e"
+    },
+    {
+      "id": "TC-028",
+      "name": "Simulator: nonexistent session (expect 404)",
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/simulator/message",
+      "status": 404,
+      "expected": 404,
+      "verdict": "PASS",
+      "response_summary": "{'detail': 'Simulator session not found'}"
+    },
+    {
+      "id": "TC-029",
+      "name": "Simulator: get history (excludes System messages)",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/simulator/16/history",
+      "status": 200,
+      "expected": 200,
+      "verdict": "PASS",
+      "response_summary": "{'session_id': 16, 'status': 'Completed', 'messages': [{'message_id': 115, 'sender_type': 'Customer', 'message_text': 'Hi, I was charged $49.99 for a subscription renewal that I requested to cancel la"
+    },
+    {
+      "id": "TC-030",
+      "name": "Simulator: history for nonexistent session (expect 404)",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/simulator/999999/history",
+      "status": 404,
+      "expected": 404,
+      "verdict": "PASS",
+      "response_summary": "{'detail': 'Simulator session not found'}"
+    }
+  ]
+}
