@@ -80,11 +80,24 @@ export const DecisionSupportCard: React.FC<Props> = ({ decision, onApplyAction }
       {onApplyAction && (
         <button
           type="button"
-          onClick={() =>
-            onApplyAction(
-              `I understand your concern. Based on our ${decision.recommended_action.replace(/_/g, ' ')} procedure, let me resolve this for you immediately.`
-            )
-          }
+          onClick={() => {
+            const action = decision.recommended_action;
+            let text = "I understand your concern. Let me resolve this for you immediately.";
+            if (action === "escalate") {
+              text = "I completely understand your frustration. I am escalating this ticket to my supervisor who will assist you immediately.";
+            } else if (action === "apologize_and_resolve") {
+              text = "I sincerely apologize for the inconvenience. Let me resolve this for you right away.";
+            } else if (action === "provide_status") {
+              text = "Let me check the exact status of your request and get right back to you.";
+            } else if (action === "clarify") {
+              text = "Could you please provide a little more detail so I can accurately resolve this for you?";
+            } else if (action === "offer_options") {
+              text = "I want to make this right. Let me offer you a few options to resolve this.";
+            } else if (action === "provide_instructions") {
+              text = "I can certainly help you with that. Here are the step-by-step instructions.";
+            }
+            onApplyAction(text);
+          }}
           className="mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <span>Use Suggested Tone in Reply</span>

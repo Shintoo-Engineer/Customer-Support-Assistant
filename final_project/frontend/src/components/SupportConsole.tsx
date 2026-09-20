@@ -143,9 +143,9 @@ export const SupportConsole: React.FC<Props> = ({
   const recommendations: KnowledgeRecommendation[] = sessionData.recommendations || [];
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4">
+    <div className="w-full flex-1 flex flex-col py-4 px-4 sm:px-6 lg:px-8 min-h-[600px]" style={{ height: 'calc(100vh - 104px)' }}>
       {/* Session Top Bar - Clean uniform alignment */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 gap-3">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 gap-3 shrink-0">
         <div className="flex items-center gap-2.5 flex-wrap">
           <span className="font-bold text-slate-900 text-sm sm:text-base">
             Session #{sessionData.session_id}
@@ -177,17 +177,17 @@ export const SupportConsole: React.FC<Props> = ({
       </div>
 
       {turnError && (
-        <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded">
+        <div className="mb-3 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded shrink-0">
           {turnError}
         </div>
       )}
 
       {/* Main 2-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 h-full overflow-hidden">
         {/* LEFT COLUMN: CONVERSATION (7 cols) */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-lg flex flex-col h-[650px] shadow-xs">
+        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-lg flex flex-col h-full min-h-0 shadow-xs overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 rounded-t-lg flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 rounded-t-lg flex items-center justify-between shrink-0">
             <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Dialogue Stream
             </h2>
@@ -233,7 +233,7 @@ export const SupportConsole: React.FC<Props> = ({
           </div>
 
           {/* Response Input Box with Clean Aligned Action Toolbar */}
-          <div className="p-3.5 border-t border-slate-200 bg-slate-50 rounded-b-lg">
+          <div className="p-3.5 border-t border-slate-200 bg-slate-50 rounded-b-lg shrink-0">
             <form onSubmit={handleSendResponse} className="space-y-2.5">
               <textarea
                 ref={inputRef}
@@ -262,10 +262,10 @@ export const SupportConsole: React.FC<Props> = ({
         </div>
 
         {/* RIGHT COLUMN: DECISION SUPPORT + ANALYSIS + KNOWLEDGE (5 cols) */}
-        <div className="lg:col-span-5 space-y-4">
+        <div className="lg:col-span-5 flex flex-col space-y-4 h-full min-h-0 overflow-y-auto pr-1">
           {/* TASK 4 PHASE 6 DECISION SUPPORT (If Available) */}
           {decisionSupport && (
-            <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+            <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs shrink-0">
               <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
                 <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   AI Decision Support
@@ -296,14 +296,40 @@ export const SupportConsole: React.FC<Props> = ({
                     {decisionSupport.rationale}
                   </p>
                 )}
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    const action = decisionSupport.recommended_action;
+                    let text = "I understand your concern. Let me resolve this for you immediately.";
+                    if (action === "escalate") {
+                      text = "I completely understand your frustration. I am escalating this ticket to my supervisor who will assist you immediately.";
+                    } else if (action === "apologize_and_resolve") {
+                      text = "I sincerely apologize for the inconvenience. Let me resolve this for you right away.";
+                    } else if (action === "provide_status") {
+                      text = "Let me check the exact status of your request and get right back to you.";
+                    } else if (action === "clarify") {
+                      text = "Could you please provide a little more detail so I can accurately resolve this for you?";
+                    } else if (action === "offer_options") {
+                      text = "I want to make this right. Let me offer you a few options to resolve this.";
+                    } else if (action === "provide_instructions") {
+                      text = "I can certainly help you with that. Here are the step-by-step instructions.";
+                    }
+                    handleInsertText(text);
+                  }}
+                  className="mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>Use Suggested Tone in Reply</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
               </div>
             </div>
           )}
 
-          {/* TASK 4 ANALYSIS */}
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+          {/* TASK 4 ANALYSIS & TASK 3 METRICS */}
+          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs shrink-0">
             <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider pb-2 mb-3 border-b border-slate-100">
-              Task 4 Analysis
+              Task 4 Analysis & Metrics
             </h2>
 
             {analysis ? (
@@ -329,7 +355,13 @@ export const SupportConsole: React.FC<Props> = ({
                 <div className="flex justify-between py-1 border-b border-slate-50">
                   <span className="text-slate-500">Frustration</span>
                   <span className="font-semibold text-slate-900">
-                    {analysis.frustration_level !== undefined ? `${analysis.frustration_level}/10` : '—'}
+                    {analysis.frustration_level !== undefined ? `${analysis.frustration_level}/10` : (sessionData.state?.frustration !== undefined ? `${Math.round(sessionData.state.frustration / 10)}/10` : '—')}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-500">Patience</span>
+                  <span className="font-semibold text-slate-900">
+                    {sessionData.state?.patience !== undefined ? `${sessionData.state.patience}/100` : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-50">
@@ -357,7 +389,7 @@ export const SupportConsole: React.FC<Props> = ({
           </div>
 
           {/* TASK 5 KNOWLEDGE RECOMMENDATIONS */}
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs shrink-0">
             <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
               <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Knowledge Recommendations (Task 5)

@@ -40,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
         {/* App Title - Never wraps */}
         <div
           className="font-bold text-slate-900 text-sm sm:text-base whitespace-nowrap shrink-0 cursor-pointer hover:text-slate-700 transition"

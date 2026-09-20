@@ -61,21 +61,22 @@ export const NewSimulation: React.FC<Props> = ({ onSessionStarted }) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-10 px-4">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900">New Simulation</h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Configure a customer scenario to begin support simulation.
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded">
-          {error}
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-slate-900">New Simulation</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Configure a customer scenario to begin support simulation.
+          </p>
         </div>
-      )}
 
-      <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+        {error && (
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
         {/* Required: Scenario */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -206,6 +207,7 @@ export const NewSimulation: React.FC<Props> = ({ onSessionStarted }) => {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 };

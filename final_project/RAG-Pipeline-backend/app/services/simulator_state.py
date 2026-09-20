@@ -94,7 +94,7 @@ def initial_state(
 
     base_frustration = 20 + (severity - 1) * 15
     base_escalation = 10 + (severity - 1) * 12
-    base_patience = patience_input * 20
+    base_patience = patience_input * 25  # Changed to 25 to hit exactly 75 when patience_level is 3
     base_trust = 60 - (severity * 5)
     base_satisfaction = 40 - (severity * 5)
 
@@ -102,19 +102,17 @@ def initial_state(
     if "angry" in emotion_key:
         base_frustration += 25
         base_escalation += 25
-        base_patience -= 20
         base_trust -= 15
         base_satisfaction -= 15
     elif "frustrated" in emotion_key:
         base_frustration += 15
         base_escalation += 15
-        base_patience -= 10
         base_trust -= 10
         base_satisfaction -= 10
     elif "impatient" in emotion_key:
         base_frustration += 10
         base_escalation += 15
-        base_patience -= 25
+        base_patience -= 15
     elif "confused" in emotion_key:
         base_frustration += 5
         base_escalation += 5

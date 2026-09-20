@@ -73,8 +73,8 @@ export const AdminPanel: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4">
-      {/* Top Header with Perfectly Aligned Buttons */}
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header section with switch to simulation button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-6 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">

@@ -10,6 +10,13 @@ export const authApi = {
   },
 
   /**
+   * Register a new customer user.
+   */
+  register: (name: string, email: string, password: string) => {
+    return api.post<{ message: string; user_id: number; name: string; email: string; role: string }>('/auth/register', { name, email, password });
+  },
+
+  /**
    * Validate token and fetch current user profile and role from backend.
    */
   getMe: () => {

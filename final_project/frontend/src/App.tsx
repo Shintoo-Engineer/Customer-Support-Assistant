@@ -189,7 +189,7 @@ export const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans antialiased text-slate-800">
         <header className="bg-white border-b border-slate-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
             <div className="font-bold text-slate-900 text-sm sm:text-base">
               Customer Support Assistant
             </div>
@@ -202,7 +202,7 @@ export const App: React.FC = () => {
           </div>
         </header>
 
-        <main className="flex-1">
+        <main className="flex-1 flex flex-col w-full">
           <Login onLoginSuccess={handleLoginSuccess} />
         </main>
       </div>
@@ -229,7 +229,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 flex flex-col w-full">
         {/* If viewing a specific session summary */}
         {viewingSummarySessionId !== null ? (
           <SessionSummaryView
@@ -255,6 +255,7 @@ export const App: React.FC = () => {
                 onStartSimulation={() => setActiveTab('new-simulation')}
                 activeSessionId={activeSession?.session_id ?? null}
                 onResumeSession={() => setActiveTab('support-console')}
+                onNavigate={setActiveTab}
               />
             )}
 
@@ -270,8 +271,8 @@ export const App: React.FC = () => {
                   onTurnUpdate={handleTurnUpdate}
                 />
               ) : (
-                <div className="max-w-md mx-auto py-20 px-4 text-center">
-                  <div className="bg-white border border-slate-200 rounded-lg p-8 shadow-xs">
+                <div className="flex-1 flex items-center justify-center py-20 px-4 text-center w-full">
+                  <div className="bg-white border border-slate-200 rounded-lg p-8 shadow-xs max-w-md w-full">
                     <h2 className="text-lg font-bold text-slate-900 mb-2">No Active Simulation</h2>
                     <p className="text-xs text-slate-600 mb-6 leading-relaxed">
                       You do not have an active customer session open in the Support Console. Start a new simulation or launch a quick demo session.
@@ -310,8 +311,8 @@ export const App: React.FC = () => {
       </main>
 
       {/* Clean Footer with test link */}
-      <footer className="border-t border-slate-200 bg-white py-3 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <footer className="border-t border-slate-200 bg-white py-3 px-4 sm:px-6 lg:px-8 w-full shrink-0">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <div>
             Customer Support Assistant • Backend on <span className="font-mono text-slate-700">localhost:8000</span>
           </div>

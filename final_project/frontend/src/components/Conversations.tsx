@@ -60,7 +60,7 @@ export const Conversations: React.FC<Props> = ({ onOpenSession }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Conversations</h1>
