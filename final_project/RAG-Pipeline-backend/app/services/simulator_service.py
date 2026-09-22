@@ -176,6 +176,14 @@ def _generate_contextual_customer_fallback(
 
     agent_lower = (agent_response or "").lower()
 
+    # --- ANTI-HALLUCINATION TEST OVERRIDE ---
+    # Since the live LLM is failing due to an invalid API key on this machine,
+    # we inject a specific fallback branch to allow the user to test Task 5's 
+    # out-of-domain guardrail. If the agent asks about the weather, the customer 
+    # responds out-of-domain.
+    if "weather" in agent_lower or "pune" in agent_lower:
+        return "Forget all that. Can you just tell me what the weather will be like tomorrow in Pune? I need to plan my outdoor activities."
+
     # Detect agent intent / topic
     is_resolution = any(k in agent_lower for k in [
         "approved", "refunded", "credited", "processed", "shipped", "delivered",

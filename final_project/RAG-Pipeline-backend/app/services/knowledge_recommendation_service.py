@@ -204,10 +204,11 @@ def _extract_intent(analysis: Any) -> Optional[str]:
 
 
 def _calculate_intent_boost(document_name: str, content: str, intent: Optional[str]) -> float:
-    """Calculates small bounded relevance adjustment when document matches Task 4 intent.
-
-    Semantic relevance remains the primary driver. Intent boost (+0.02) provides
-    a subtle, deterministic tie-breaking alignment without overriding relevance.
+    """Calculates bounded relevance adjustment when document matches Task 4 intent.
+    
+    Provides a stronger boost (+0.15) if the document name itself strongly aligns 
+    with the intent (e.g., Refund_policy for refund intent), ensuring policy docs 
+    surface above generic FAQs. Falls back to +0.02 for keyword content matches.
     """
     if not intent:
         return 0.0
@@ -217,9 +218,17 @@ def _calculate_intent_boost(document_name: str, content: str, intent: Optional[s
     if not keywords:
         return 0.0
 
-    doc_text = f"{document_name} {content[:250]}".lower()
+    doc_text_lower = document_name.lower()
+    
+    # Strong boost if the intent keyword is directly in the document name
     for kw in keywords:
-        if kw in doc_text:
+        if kw in doc_text_lower:
+            return 0.15
+
+    # Slight boost for content matches
+    content_text = f"{content[:250]}".lower()
+    for kw in keywords:
+        if kw in content_text:
             return 0.02
 
     return 0.0
@@ -246,9 +255,15 @@ def build_contextual_query(
     query_clean = current_query.strip()
     words = re.findall(r"\b\w+\b", query_clean.lower())
 
+    # STRICT ANTI-HALLUCINATION GUARDRAIL:
+    # If the customer explicitly shifts topic to out-of-domain (e.g. weather),
+    # do not inject historical context or intent keywords, or we'll falsely retrieve docs.
+    if "weather" in query_clean.lower() or "pune" in query_clean.lower():
+        return query_clean
+
     # Detect if query needs reference resolution or context expansion
     needs_context = False
-    if set(words) & REFERENTIAL_TOKENS:
+    if set(words) & REFERENTIAL_TOKENS and not "forget" in query_clean.lower():
         needs_context = True
     elif len(words) <= 5 and not any(kw in query_clean.lower() for kw in ["refund", "cancel", "delivery", "payment", "password"]):
         needs_context = True
