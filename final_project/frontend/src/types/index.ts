@@ -122,24 +122,6 @@ export interface SessionAnalysisSummary {
   turn_count: number;
 }
 
-export interface ResponseEvaluation {
-  clarity: number;
-  empathy: number;
-  relevance: number;
-  professionalism: number;
-  notes?: string | null;
-}
-
-export type EscalationRiskLevel = 'Low' | 'Medium' | 'High' | 'Critical';
-
-export interface EscalationRiskMonitorResult {
-  risk_score: number;
-  risk_level: EscalationRiskLevel;
-  risk_reasoning: string;
-  risk_indicators: string[];
-  contributing_factors: string[];
-}
-
 export interface DecisionSupportResult {
   priority: 'low' | 'medium' | 'high' | 'critical';
   recommended_tone: 'empathetic' | 'reassuring' | 'clarifying' | 'apologetic' | 'professional' | 'calm' | 'firm';
@@ -151,21 +133,6 @@ export interface DecisionSupportResult {
   confidence: number;
   session_id?: number | null;
   turn_number?: number | null;
-  suggested_response?: string;
-  coaching_tips?: string[];
-  response_evaluation?: ResponseEvaluation;
-  escalation_monitor?: EscalationRiskMonitorResult;
-  escalation_alert?: EscalationAlert;
-}
-
-export interface EscalationAlert {
-  active: boolean;
-  alert_level: EscalationRiskLevel;
-  risk_score: number;
-  threshold: number;
-  indicators: string[];
-  reasoning: string;
-  recommended_action: string;
 }
 
 export interface AnalysisMetrics {

@@ -166,42 +166,7 @@ def start_simulator_session(
         )
         if analysis_resp:
             analysis_dict = analysis_resp.model_dump() if hasattr(analysis_resp, "model_dump") else analysis_resp
-            
-            # --- OVERRIDE FOR TURN 1 METRICS ---
-            # Enforce the user's selected initial_emotion and the deterministic frustration
-            # so the Task 4 display precisely matches the requested setup constraints.
-            turn_1_emotion = request.initial_emotion.strip().lower()
-            turn_1_frustration = max(1, min(10, start_state.get("frustration", 50) // 10))
-            
-            # Determine appropriate base risk and sentiment for the forced state
-            if turn_1_emotion == "angry" or turn_1_frustration >= 8:
-                turn_1_risk = "high"
-                turn_1_sentiment = "negative"
-            elif turn_1_emotion in ["frustrated", "worried"] or turn_1_frustration >= 5:
-                turn_1_risk = "medium"
-                turn_1_sentiment = "negative"
-            elif turn_1_emotion in ["happy", "satisfied"]:
-                turn_1_risk = "low"
-                turn_1_sentiment = "positive"
-            else:
-                turn_1_risk = "low"
-                turn_1_sentiment = "neutral"
-            
-            analysis_dict["emotion"] = turn_1_emotion
-            analysis_dict["frustration_level"] = turn_1_frustration
-            analysis_dict["escalation_risk"] = turn_1_risk
-            analysis_dict["sentiment"] = turn_1_sentiment
-            
-            if hasattr(analysis_resp, "emotion"):
-                analysis_resp.emotion = turn_1_emotion
-            if hasattr(analysis_resp, "frustration_level"):
-                analysis_resp.frustration_level = turn_1_frustration
-            if hasattr(analysis_resp, "escalation_risk"):
-                analysis_resp.escalation_risk = turn_1_risk
-            if hasattr(analysis_resp, "sentiment"):
-                analysis_resp.sentiment = turn_1_sentiment
-                
-            logger.info("Task 4 analysis completed and turn 1 metrics enforced for session %s", session_row.session_id)
+            logger.info("Task 4 analysis completed for session %s", session_row.session_id)
     except Exception as e:
         logger.warning("Task 4 analysis gracefully bypassed on exception: %s", e)
 
@@ -404,37 +369,6 @@ def send_simulator_message(
         )
         if analysis_resp:
             analysis_dict = analysis_resp.model_dump() if hasattr(analysis_resp, "model_dump") else analysis_resp
-            
-            # --- POST-PROCESSING ENFORCEMENT ---
-            # Ensure weak fallback LLMs don't output contradictory metrics
-            # E.g., if internal frustration dropped to 1/10, emotion must be positive/satisfied.
-            current_frustration_level = max(1, min(10, updated_state.get("frustration", 50) // 10))
-            
-            customer_lower = customer_message.lower() if customer_message else ""
-            is_resolution_msg = any(g in customer_lower for g in ["thank you", "thanks", "resolved", "fixed", "all good", "sorted"])
-            
-            if current_frustration_level <= 3 or is_resolution_msg:
-                analysis_dict["emotion"] = "satisfied"
-                analysis_dict["sentiment"] = "positive"
-                analysis_dict["escalation_risk"] = "low"
-                analysis_dict["satisfaction_trend"] = "improving" if is_resolution_msg else "stable"
-                if hasattr(analysis_resp, "emotion"): analysis_resp.emotion = "satisfied"
-                if hasattr(analysis_resp, "sentiment"): analysis_resp.sentiment = "positive"
-                if hasattr(analysis_resp, "escalation_risk"): analysis_resp.escalation_risk = "low"
-                if hasattr(analysis_resp, "satisfaction_trend"): analysis_resp.satisfaction_trend = analysis_dict["satisfaction_trend"]
-            elif current_frustration_level >= 8:
-                analysis_dict["emotion"] = "angry"
-                analysis_dict["sentiment"] = "negative"
-                analysis_dict["escalation_risk"] = "high"
-                if hasattr(analysis_resp, "emotion"): analysis_resp.emotion = "angry"
-                if hasattr(analysis_resp, "sentiment"): analysis_resp.sentiment = "negative"
-                if hasattr(analysis_resp, "escalation_risk"): analysis_resp.escalation_risk = "high"
-                
-            # Always sync frustration level with the deterministic state
-            analysis_dict["frustration_level"] = current_frustration_level
-            if hasattr(analysis_resp, "frustration_level"):
-                analysis_resp.frustration_level = current_frustration_level
-
             logger.info("Task 4 analysis completed for session %s", session_row.session_id)
     except Exception as e:
         logger.warning("Task 4 turn analysis gracefully bypassed on exception: %s", e)

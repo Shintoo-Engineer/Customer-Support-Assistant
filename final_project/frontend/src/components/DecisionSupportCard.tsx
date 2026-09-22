@@ -55,116 +55,11 @@ export const DecisionSupportCard: React.FC<Props> = ({ decision, onApplyAction }
         </div>
       </div>
 
-      {/* Suggested Response */}
-      {decision.suggested_response && (
-        <div className="mt-3 bg-indigo-600/5 rounded-lg p-3 border border-indigo-100">
-          <span className="text-indigo-700 uppercase text-[10px] font-bold block mb-1">Suggested Response</span>
-          <p className="text-xs text-slate-800 italic leading-relaxed">
-            "{decision.suggested_response}"
-          </p>
-
-          {/* Evaluation Metrics */}
-          {decision.response_evaluation && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5 text-[9px] uppercase font-bold tracking-wide">
-              <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Clarity {Math.round(decision.response_evaluation.clarity * 100)}%</span>
-              <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Empathy {Math.round(decision.response_evaluation.empathy * 100)}%</span>
-              <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Relevance {Math.round(decision.response_evaluation.relevance * 100)}%</span>
-              <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Pro {Math.round(decision.response_evaluation.professionalism * 100)}%</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Coaching Tips */}
-      {decision.coaching_tips && decision.coaching_tips.length > 0 ? (
-        <div className="mt-3 text-xs bg-white/70 rounded-lg p-2.5 border border-slate-200/60 leading-relaxed">
-          <span className="font-semibold text-slate-700 block mb-1 uppercase text-[10px]">Coaching Tips:</span>
-          <ul className="space-y-1.5">
-            {decision.coaching_tips.map((tip, i) => (
-              <li key={i} className="flex items-start gap-1.5">
-                <span className="text-amber-500 shrink-0 mt-[1px]">💡</span>
-                <span className="text-slate-700">{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="mt-2.5 text-xs text-slate-600 bg-white/70 rounded-lg p-2.5 border border-slate-200/60 leading-relaxed">
-          <span className="font-semibold text-slate-700 block mb-0.5">Rationale:</span>
-          {decision.rationale}
-        </div>
-      )}
-
-      {/* Task 6 Phase 2: Escalation Risk Monitor */}
-      {decision.escalation_monitor && (
-        <div className="mt-3 bg-slate-50 rounded-lg p-3 border border-slate-200 relative">
-          <span className="absolute -top-2.5 left-3 px-1.5 bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-sm border border-slate-200 border-b-0">Escalation Monitor</span>
-          
-          <div className="flex items-center justify-between mt-1 mb-2">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800">{Math.round(decision.escalation_monitor.risk_score)}</span>
-              <span className="text-[10px] text-slate-500 font-bold uppercase">/ 100</span>
-            </div>
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-              decision.escalation_monitor.risk_level === 'Critical' ? 'bg-red-100 text-red-800 border-red-200' :
-              decision.escalation_monitor.risk_level === 'High' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-              decision.escalation_monitor.risk_level === 'Medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-              'bg-emerald-100 text-emerald-800 border-emerald-200'
-            }`}>
-              {decision.escalation_monitor.risk_level} Risk
-            </span>
-          </div>
-
-          {decision.escalation_monitor.risk_indicators.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {decision.escalation_monitor.risk_indicators.map((ind: string, i: number) => (
-                <span key={i} className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded text-[9px] font-bold uppercase">{ind}</span>
-              ))}
-            </div>
-          )}
-
-          <p className="text-[11px] text-slate-700 leading-relaxed border-t border-slate-100 pt-2">
-            <span className="font-semibold text-slate-900 block mb-0.5">Reasoning:</span>
-            {decision.escalation_monitor.risk_reasoning}
-          </p>
-        </div>
-      )}
-
-      {/* Task 6 Phase 3: Escalation Alert */}
-      {decision.escalation_alert && decision.escalation_alert.active && (
-        <div className={`mt-3 rounded-lg p-3 border-2 ${
-          decision.escalation_alert.alert_level === 'Critical'
-            ? 'bg-red-50 border-red-400 shadow-md shadow-red-100'
-            : 'bg-orange-50 border-orange-300'
-        }`}>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">
-              {decision.escalation_alert.alert_level === 'Critical' ? '🚨' : '⚠️'}
-            </span>
-            <span className={`text-xs font-black uppercase tracking-wider ${
-              decision.escalation_alert.alert_level === 'Critical' ? 'text-red-800' : 'text-orange-800'
-            }`}>
-              Escalation Alert — {decision.escalation_alert.alert_level} Risk
-            </span>
-            <span className={`ml-auto text-xs font-bold ${
-              decision.escalation_alert.alert_level === 'Critical' ? 'text-red-700' : 'text-orange-700'
-            }`}>
-              {Math.round(decision.escalation_alert.risk_score)}/100
-            </span>
-          </div>
-
-          {decision.escalation_alert.recommended_action && (
-            <div className={`p-2 rounded text-[11px] leading-relaxed ${
-              decision.escalation_alert.alert_level === 'Critical'
-                ? 'bg-red-100 border border-red-200 text-red-900'
-                : 'bg-orange-100 border border-orange-200 text-orange-900'
-            }`}>
-              <span className="font-bold block mb-0.5">Recommended Action:</span>
-              {decision.escalation_alert.recommended_action}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Rationale */}
+      <div className="mt-2.5 text-xs text-slate-600 bg-white/70 rounded-lg p-2.5 border border-slate-200/60 leading-relaxed">
+        <span className="font-semibold text-slate-700 block mb-0.5">Rationale:</span>
+        {decision.rationale}
+      </div>
 
       {/* Risk flags */}
       {decision.risk_flags && decision.risk_flags.length > 0 && (
@@ -173,7 +68,7 @@ export const DecisionSupportCard: React.FC<Props> = ({ decision, onApplyAction }
           {decision.risk_flags.map((flag, idx) => (
             <span
               key={idx}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-red-50 text-red-700 border border-red-200"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-2xs font-medium bg-red-50 text-red-700 border border-red-200"
             >
               <AlertOctagon className="w-3 h-3" />
               {flag}
@@ -185,10 +80,27 @@ export const DecisionSupportCard: React.FC<Props> = ({ decision, onApplyAction }
       {onApplyAction && (
         <button
           type="button"
-          onClick={() => onApplyAction(decision.suggested_response || "")}
-          className="mt-3 w-full py-2 px-3 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+          onClick={() => {
+            const action = decision.recommended_action;
+            let text = "I understand your concern. Let me resolve this for you immediately.";
+            if (action === "escalate") {
+              text = "I completely understand your frustration. I am escalating this ticket to my supervisor who will assist you immediately.";
+            } else if (action === "apologize_and_resolve") {
+              text = "I sincerely apologize for the inconvenience. Let me resolve this for you right away.";
+            } else if (action === "provide_status") {
+              text = "Let me check the exact status of your request and get right back to you.";
+            } else if (action === "clarify") {
+              text = "Could you please provide a little more detail so I can accurately resolve this for you?";
+            } else if (action === "offer_options") {
+              text = "I want to make this right. Let me offer you a few options to resolve this.";
+            } else if (action === "provide_instructions") {
+              text = "I can certainly help you with that. Here are the step-by-step instructions.";
+            }
+            onApplyAction(text);
+          }}
+          className="mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>Use Suggested Response</span>
+          <span>Use Suggested Tone in Reply</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       )}
