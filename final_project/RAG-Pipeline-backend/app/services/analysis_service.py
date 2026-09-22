@@ -917,12 +917,12 @@ def get_analysis_history(session_id: int, db: DBSession) -> List[TurnAnalysis]:
                 turn_analyses.append(
                     TurnAnalysis(
                         turn=int(t_num),
-                        intent=CustomerIntent(a["intent"]),
-                        emotion=CustomerEmotion(a["emotion"]),
-                        sentiment=CustomerSentiment(a["sentiment"]),
+                        intent=CustomerIntent(str(a["intent"]).lower().strip()),
+                        emotion=CustomerEmotion(str(a["emotion"]).lower().strip()),
+                        sentiment=CustomerSentiment(str(a["sentiment"]).lower().strip()),
                         frustration_level=int(a["frustration_level"]),
-                        satisfaction_trend=SatisfactionTrend(a["satisfaction_trend"]),
-                        escalation_risk=EscalationRisk(a["escalation_risk"]),
+                        satisfaction_trend=SatisfactionTrend(str(a["satisfaction_trend"]).lower().strip()),
+                        escalation_risk=EscalationRisk(str(a["escalation_risk"]).lower().strip()),
                         confidence=float(a["confidence"]),
                         analysis_source=a.get("analysis_source") or "fallback",
                         timestamp=ts_str
@@ -935,12 +935,22 @@ def get_analysis_history(session_id: int, db: DBSession) -> List[TurnAnalysis]:
     if not turn_analyses and conversation_row.intent:
         try:
             conv_ts = conversation_row.created_at.isoformat() if hasattr(conversation_row.created_at, "isoformat") else str(conversation_row.created_at) if conversation_row.created_at else None
+            
+            # Map frontend sentiment string ("Frustrated") to a valid CustomerSentiment ("negative", "neutral", "positive")
+            raw_sentiment = (conversation_row.sentiment or "neutral").lower().strip()
+            if raw_sentiment in ["angry", "frustrated", "worried", "negative"]:
+                mapped_sentiment = "negative"
+            elif raw_sentiment in ["happy", "satisfied", "positive"]:
+                mapped_sentiment = "positive"
+            else:
+                mapped_sentiment = "neutral"
+                
             turn_analyses.append(
                 TurnAnalysis(
                     turn=1,
-                    intent=CustomerIntent(conversation_row.intent),
+                    intent=CustomerIntent(str(conversation_row.intent).lower()),
                     emotion=CustomerEmotion.NEUTRAL,
-                    sentiment=CustomerSentiment(conversation_row.sentiment or "neutral"),
+                    sentiment=CustomerSentiment(mapped_sentiment),
                     frustration_level=2,
                     satisfaction_trend=SatisfactionTrend.STABLE,
                     escalation_risk=EscalationRisk(str(conversation_row.escalation_risk or "low").lower()),

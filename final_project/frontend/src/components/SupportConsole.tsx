@@ -265,13 +265,14 @@ export const SupportConsole: React.FC<Props> = ({
         <div className="lg:col-span-5 flex flex-col space-y-4 h-full min-h-0 overflow-y-auto pr-1">
           {/* TASK 4 PHASE 6 DECISION SUPPORT (If Available) */}
           {decisionSupport && (
-            <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs shrink-0">
-              <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
-                <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  AI Decision Support
+            <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs shrink-0 flex flex-col gap-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                  Task 6 Coaching & Response
                 </h2>
                 <span
-                  className={`text-2xs font-bold uppercase px-2 py-0.5 rounded ${
+                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
                     decisionSupport.priority === 'critical'
                       ? 'bg-rose-100 text-rose-800 border border-rose-200'
                       : decisionSupport.priority === 'high'
@@ -282,46 +283,152 @@ export const SupportConsole: React.FC<Props> = ({
                   {decisionSupport.priority} Priority
                 </span>
               </div>
-              <div className="space-y-2 text-xs">
-                <div>
-                  <span className="text-slate-500 block text-2xs uppercase font-semibold">Recommended Tone</span>
-                  <span className="font-medium text-slate-800 capitalize">{decisionSupport.recommended_tone}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-2xs uppercase font-semibold">Recommended Action</span>
-                  <span className="font-medium text-slate-900">{decisionSupport.recommended_action}</span>
-                </div>
-                {decisionSupport.rationale && (
-                  <p className="text-2xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 leading-relaxed">
-                    {decisionSupport.rationale}
+
+              
+              {/* Task 6 Phase 2: Escalation Risk Monitor */}
+              {decisionSupport.escalation_monitor && (
+                <div className="mt-2 bg-slate-50 border border-slate-200 rounded-lg p-3 relative">
+                  <span className="absolute -top-2.5 left-3 px-1.5 bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-sm border border-slate-200 border-b-0">Escalation Monitor</span>
+                  
+                  <div className="flex items-center justify-between mt-1 mb-2">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-black text-slate-800">{Math.round(decisionSupport.escalation_monitor.risk_score)}</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase">/ 100</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                      decisionSupport.escalation_monitor.risk_level === 'Critical' ? 'bg-red-100 text-red-800 border-red-200' :
+                      decisionSupport.escalation_monitor.risk_level === 'High' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                      decisionSupport.escalation_monitor.risk_level === 'Medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                      'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    }`}>
+                      {decisionSupport.escalation_monitor.risk_level} Risk
+                    </span>
+                  </div>
+
+                  {decisionSupport.escalation_monitor.risk_indicators.length > 0 && (
+                     <div className="flex flex-wrap gap-1 mb-2">
+                        {decisionSupport.escalation_monitor.risk_indicators.map((ind, i) => (
+                           <span key={i} className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded text-[9px] font-bold uppercase">{ind}</span>
+                        ))}
+                     </div>
+                  )}
+
+                  <p className="text-[11px] text-slate-700 leading-relaxed border-t border-slate-100 pt-2">
+                    <span className="font-semibold text-slate-900 block mb-0.5">Reasoning:</span>
+                    {decisionSupport.escalation_monitor.risk_reasoning}
                   </p>
-                )}
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    const action = decisionSupport.recommended_action;
-                    let text = "I understand your concern. Let me resolve this for you immediately.";
-                    if (action === "escalate") {
-                      text = "I completely understand your frustration. I am escalating this ticket to my supervisor who will assist you immediately.";
-                    } else if (action === "apologize_and_resolve") {
-                      text = "I sincerely apologize for the inconvenience. Let me resolve this for you right away.";
-                    } else if (action === "provide_status") {
-                      text = "Let me check the exact status of your request and get right back to you.";
-                    } else if (action === "clarify") {
-                      text = "Could you please provide a little more detail so I can accurately resolve this for you?";
-                    } else if (action === "offer_options") {
-                      text = "I want to make this right. Let me offer you a few options to resolve this.";
-                    } else if (action === "provide_instructions") {
-                      text = "I can certainly help you with that. Here are the step-by-step instructions.";
-                    }
-                    handleInsertText(text);
-                  }}
-                  className="mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span>Use Suggested Tone in Reply</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </button>
+                </div>
+              )}
+
+              {/* Task 6 Phase 3: Escalation Alert */}
+              {decisionSupport.escalation_alert && decisionSupport.escalation_alert.active && (
+                <div className={`mt-2 rounded-lg p-3 border-2 ${
+                  decisionSupport.escalation_alert.alert_level === 'Critical'
+                    ? 'bg-red-50 border-red-400 shadow-md shadow-red-100'
+                    : 'bg-orange-50 border-orange-300'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">
+                      {decisionSupport.escalation_alert.alert_level === 'Critical' ? '🚨' : '⚠️'}
+                    </span>
+                    <span className={`text-xs font-black uppercase tracking-wider ${
+                      decisionSupport.escalation_alert.alert_level === 'Critical' ? 'text-red-800' : 'text-orange-800'
+                    }`}>
+                      Escalation Alert — {decisionSupport.escalation_alert.alert_level} Risk
+                    </span>
+                    <span className={`ml-auto text-xs font-bold ${
+                      decisionSupport.escalation_alert.alert_level === 'Critical' ? 'text-red-700' : 'text-orange-700'
+                    }`}>
+                      {Math.round(decisionSupport.escalation_alert.risk_score)}/100
+                    </span>
+                  </div>
+
+                  {decisionSupport.escalation_alert.indicators.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {decisionSupport.escalation_alert.indicators.map((ind, i) => (
+                        <span key={i} className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                          decisionSupport.escalation_alert!.alert_level === 'Critical'
+                            ? 'bg-red-100 text-red-700 border border-red-200'
+                            : 'bg-orange-100 text-orange-700 border border-orange-200'
+                        }`}>{ind}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {decisionSupport.escalation_alert.reasoning && (
+                    <p className={`text-[11px] leading-relaxed mb-2 ${
+                      decisionSupport.escalation_alert.alert_level === 'Critical' ? 'text-red-800' : 'text-orange-800'
+                    }`}>
+                      {decisionSupport.escalation_alert.reasoning}
+                    </p>
+                  )}
+
+                  {decisionSupport.escalation_alert.recommended_action && (
+                    <div className={`p-2 rounded text-[11px] leading-relaxed ${
+                      decisionSupport.escalation_alert.alert_level === 'Critical'
+                        ? 'bg-red-100 border border-red-200 text-red-900'
+                        : 'bg-orange-100 border border-orange-200 text-orange-900'
+                    }`}>
+                      <span className="font-bold block mb-0.5">Recommended Action:</span>
+                      {decisionSupport.escalation_alert.recommended_action}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Response Suggestion */}
+              {decisionSupport.suggested_response && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded-md p-3 relative mt-2">
+                  <span className="absolute -top-2.5 left-3 px-1.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wider rounded-sm border border-indigo-100 border-b-0">Suggested Response</span>
+                  <p className="text-[13px] text-slate-800 italic leading-relaxed pt-1">
+                    "{decisionSupport.suggested_response}"
+                  </p>
+                  
+                  {/* Evaluation Metrics */}
+                  {decisionSupport.response_evaluation && (
+                    <div className="mt-3 flex flex-wrap gap-1.5 text-[9px] uppercase font-bold tracking-wide">
+                      <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Clarity {Math.round(decisionSupport.response_evaluation.clarity * 100)}%</span>
+                      <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Empathy {Math.round(decisionSupport.response_evaluation.empathy * 100)}%</span>
+                      <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Relevance {Math.round(decisionSupport.response_evaluation.relevance * 100)}%</span>
+                      <span className="px-1.5 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-sm">Pro {Math.round(decisionSupport.response_evaluation.professionalism * 100)}%</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleInsertText(decisionSupport.suggested_response || "")}
+                    className="mt-3 w-full py-1.5 px-3 rounded text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Use Suggested Response</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </button>
+                </div>
+              )}
+
+              {/* Coaching Tips */}
+              {decisionSupport.coaching_tips && decisionSupport.coaching_tips.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-slate-500 block text-2xs uppercase font-semibold">Coaching Tips</span>
+                  <ul className="text-xs text-slate-700 space-y-1 pl-1">
+                    {decisionSupport.coaching_tips.map((tip, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-amber-500 shrink-0 mt-[1px]">💡</span>
+                        <span className="leading-relaxed">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-2.5 rounded border border-slate-100 mt-1">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-semibold">Recommended Tone</span>
+                  <span className="font-semibold text-slate-800 capitalize">{decisionSupport.recommended_tone}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-semibold">Recommended Action</span>
+                  <span className="font-semibold text-slate-900 capitalize">{decisionSupport.recommended_action.replace(/_/g, ' ')}</span>
+                </div>
               </div>
             </div>
           )}

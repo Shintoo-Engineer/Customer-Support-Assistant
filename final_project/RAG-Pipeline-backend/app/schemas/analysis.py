@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -297,6 +298,43 @@ class CustomerNeed(str, Enum):
     INFORMATION_REQUEST = "information_request"
 
 
+class ResponseEvaluation(BaseModel):
+    """Structured evaluation of the response across clarity, empathy, relevance, and professionalism."""
+    clarity: float = Field(..., ge=0.0, le=1.0, description="Clarity and directness of communication (0.0 to 1.0).")
+    empathy: float = Field(..., ge=0.0, le=1.0, description="Empathy and emotional validation (0.0 to 1.0).")
+    relevance: float = Field(..., ge=0.0, le=1.0, description="Relevance to customer issue and context (0.0 to 1.0).")
+    professionalism: float = Field(..., ge=0.0, le=1.0, description="Professionalism and brand-aligned tone (0.0 to 1.0).")
+    notes: str | None = Field(default=None, description="Optional qualitative evaluation notes.")
+
+
+class EscalationRiskLevel(str, Enum):
+    """Specific risk levels for the Task 6 Escalation Risk Monitor."""
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    CRITICAL = "Critical"
+
+
+class EscalationRiskMonitorResult(BaseModel):
+    """Task 6 Phase 2 Escalation Risk Monitoring result."""
+    risk_score: float = Field(..., ge=0.0, le=100.0, description="Normalized risk score 0-100.")
+    risk_level: EscalationRiskLevel = Field(..., description="Classification of the risk score.")
+    risk_reasoning: str = Field(..., description="Reasoning for the assigned risk score and level.")
+    risk_indicators: list[str] = Field(default_factory=list, description="Specific conversation indicators driving risk.")
+    contributing_factors: list[str] = Field(default_factory=list, description="Base factors contributing to the score.")
+
+
+class EscalationAlert(BaseModel):
+    """Task 6 Phase 3 Escalation Alert generated when risk exceeds configured threshold."""
+    active: bool = Field(..., description="Whether an escalation alert is currently active.")
+    alert_level: EscalationRiskLevel = Field(..., description="Alert severity level matching the risk level.")
+    risk_score: float = Field(..., ge=0.0, le=100.0, description="The risk score that triggered this alert.")
+    threshold: float = Field(..., ge=0.0, le=100.0, description="The configured threshold that was exceeded.")
+    indicators: list[str] = Field(default_factory=list, description="Risk indicators driving this alert.")
+    reasoning: str = Field(default="", description="Why the alert was triggered.")
+    recommended_action: str = Field(default="", description="Context-specific recommended action for the agent.")
+
+
 class DecisionSupportResult(BaseModel):
     """Deterministic, agent-ready decision support recommendations.
 
@@ -344,4 +382,25 @@ class DecisionSupportResult(BaseModel):
         default=None,
         description="Optional dialogue turn number."
     )
+    suggested_response: str = Field(
+        default="",
+        description="Context-aware suggested response for the agent to use or adapt."
+    )
+    coaching_tips: list[str] = Field(
+        default_factory=list,
+        description="Actionable, context-specific coaching tips tailored to customer emotional state and intent."
+    )
+    response_evaluation: ResponseEvaluation | dict[str, Any] = Field(
+        default_factory=dict,
+        description="Structured evaluation metrics across clarity, empathy, relevance, and professionalism."
+    )
+    escalation_monitor: EscalationRiskMonitorResult | dict[str, Any] | None = Field(
+        default=None,
+        description="Task 6 Phase 2 Escalation Risk Monitor details."
+    )
+    escalation_alert: EscalationAlert | dict[str, Any] | None = Field(
+        default=None,
+        description="Task 6 Phase 3 Escalation Alert when risk exceeds threshold."
+    )
+
 
