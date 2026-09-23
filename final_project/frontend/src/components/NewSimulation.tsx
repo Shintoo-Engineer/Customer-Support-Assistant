@@ -106,7 +106,6 @@ export const NewSimulation: React.FC<Props> = ({ onSessionStarted }) => {
             onChange={(e) => {
               const val = e.target.value as PersonaType;
               setPersona(val);
-              setInitialEmotion(val);
             }}
             className="w-full border border-slate-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-slate-500"
             required

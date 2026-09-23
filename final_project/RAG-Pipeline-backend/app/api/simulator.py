@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session as DBSession
 
 from app.models.database import SessionLocal
 from app.models.simulator import Scenario, Session, Conversation, Message
-from app.services.simulator_service import generate_customer_turn
+from app.services.simulator_service import generate_customer_turn, generate_initial_customer_message
 from app.services.simulator_state import initial_state
 from app.services.scenario_service import SCENARIOS, get_scenario_brief
 from app.services.persona_service import get_persona_brief
@@ -139,7 +139,13 @@ def start_simulator_session(
         patience_level=request.patience_level
     )
 
-    opening_message = scenario_data["opening_complaint"]
+    opening_message = generate_initial_customer_message(
+        persona=request.persona,
+        scenario=scenario_key,
+        initial_emotion=request.initial_emotion,
+        issue_severity=request.issue_severity,
+        patience_level=request.patience_level
+    )
 
     # Customer's initial opening message
     customer_msg = Message(
@@ -404,36 +410,6 @@ def send_simulator_message(
         )
         if analysis_resp:
             analysis_dict = analysis_resp.model_dump() if hasattr(analysis_resp, "model_dump") else analysis_resp
-            
-            # --- POST-PROCESSING ENFORCEMENT ---
-            # Ensure weak fallback LLMs don't output contradictory metrics
-            # E.g., if internal frustration dropped to 1/10, emotion must be positive/satisfied.
-            current_frustration_level = max(1, min(10, updated_state.get("frustration", 50) // 10))
-            
-            customer_lower = customer_message.lower() if customer_message else ""
-            is_resolution_msg = any(g in customer_lower for g in ["thank you", "thanks", "resolved", "fixed", "all good", "sorted"])
-            
-            if current_frustration_level <= 3 or is_resolution_msg:
-                analysis_dict["emotion"] = "satisfied"
-                analysis_dict["sentiment"] = "positive"
-                analysis_dict["escalation_risk"] = "low"
-                analysis_dict["satisfaction_trend"] = "improving" if is_resolution_msg else "stable"
-                if hasattr(analysis_resp, "emotion"): analysis_resp.emotion = "satisfied"
-                if hasattr(analysis_resp, "sentiment"): analysis_resp.sentiment = "positive"
-                if hasattr(analysis_resp, "escalation_risk"): analysis_resp.escalation_risk = "low"
-                if hasattr(analysis_resp, "satisfaction_trend"): analysis_resp.satisfaction_trend = analysis_dict["satisfaction_trend"]
-            elif current_frustration_level >= 8:
-                analysis_dict["emotion"] = "angry"
-                analysis_dict["sentiment"] = "negative"
-                analysis_dict["escalation_risk"] = "high"
-                if hasattr(analysis_resp, "emotion"): analysis_resp.emotion = "angry"
-                if hasattr(analysis_resp, "sentiment"): analysis_resp.sentiment = "negative"
-                if hasattr(analysis_resp, "escalation_risk"): analysis_resp.escalation_risk = "high"
-                
-            # Always sync frustration level with the deterministic state
-            analysis_dict["frustration_level"] = current_frustration_level
-            if hasattr(analysis_resp, "frustration_level"):
-                analysis_resp.frustration_level = current_frustration_level
 
             logger.info("Task 4 analysis completed for session %s", session_row.session_id)
     except Exception as e:

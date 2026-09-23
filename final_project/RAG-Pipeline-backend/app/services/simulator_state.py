@@ -94,7 +94,7 @@ def initial_state(
 
     base_frustration = 20 + (severity - 1) * 15
     base_escalation = 10 + (severity - 1) * 12
-    base_patience = patience_input * 25  # Changed to 25 to hit exactly 75 when patience_level is 3
+    base_patience = patience_input * 20  # Changed to 25 to hit exactly 75 when patience_level is 3
     base_trust = 60 - (severity * 5)
     base_satisfaction = 40 - (severity * 5)
 

@@ -6,3 +6,17 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Scratch patch scripts
+fix_*.py
+trace_*.py
+print_*.py
+patch_*.py
+test_ds_*.py
+test_flow.py
+test_suite.py
+test_thankyou.py
+test_user_screenshot.py
+verify_phase6.py
+
+

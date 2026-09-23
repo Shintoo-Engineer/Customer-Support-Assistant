@@ -118,33 +118,22 @@ def determine_priority(
 # ---------------------------------------------------------------------------
 
 def determine_recommended_tone(analysis: Any) -> RecommendedTone:
-    """Recommends agent tone tailored to the customer's emotional and frustration state.
-
-    Rules:
-    - Severe frustration (>= 8) with complaint intent: APOLOGETIC.
-    - Severe frustration (>= 8): CALM.
-    - High escalation risk or angry/frustrated emotion: EMPATHETIC.
-    - Worried emotion: REASSURING.
-    - Confused emotion: CLARIFYING.
-    - Happy or satisfied emotion: PROFESSIONAL.
-    - Neutral / default: PROFESSIONAL.
-    """
+    """Recommends agent tone tailored to the customer's emotional and frustration state."""
     frustration = getattr(analysis, "frustration_level", 0)
-    intent = getattr(analysis, "intent", CustomerIntent.GENERAL_INQUIRY)
     emotion = getattr(analysis, "emotion", CustomerEmotion.NEUTRAL)
-    risk = getattr(analysis, "escalation_risk", EscalationRisk.LOW)
+    if hasattr(emotion, "value"): emotion = emotion.value
 
-    if frustration >= 8 and intent == CustomerIntent.COMPLAINT:
+    emo_str = str(emotion).lower().strip()
+
+    if emo_str == "angry" or frustration >= 9:
         return RecommendedTone.APOLOGETIC
-    elif frustration >= 8:
-        return RecommendedTone.CALM
-    elif risk == EscalationRisk.HIGH or emotion in (CustomerEmotion.ANGRY, CustomerEmotion.FRUSTRATED):
+    elif emo_str in ("frustrated", "anxious") or frustration >= 6:
         return RecommendedTone.EMPATHETIC
-    elif emotion == CustomerEmotion.WORRIED:
+    elif emo_str == "worried":
         return RecommendedTone.REASSURING
-    elif emotion == CustomerEmotion.CONFUSED:
+    elif emo_str == "confused":
         return RecommendedTone.CLARIFYING
-    elif emotion in (CustomerEmotion.HAPPY, CustomerEmotion.SATISFIED):
+    elif emo_str in ("happy", "satisfied"):
         return RecommendedTone.PROFESSIONAL
     else:
         return RecommendedTone.PROFESSIONAL
@@ -155,23 +144,12 @@ def determine_recommended_tone(analysis: Any) -> RecommendedTone:
 # ---------------------------------------------------------------------------
 
 def determine_recommended_action(analysis: Any) -> RecommendedAction:
-    """Recommends operational action based on escalation risk and intent category.
-
-    Rules:
-    - High escalation risk or extreme frustration (>= 9): ESCALATE.
-    - Complaint intent: APOLOGIZE_AND_RESOLVE.
-    - Delivery issue: PROVIDE_STATUS.
-    - Payment issue: PROVIDE_INSTRUCTIONS.
-    - Account issue: CLARIFY.
-    - Return or exchange: OFFER_OPTIONS.
-    - Refund request: RESOLVE.
-    - General inquiry: PROVIDE_INSTRUCTIONS.
-    """
-    risk = getattr(analysis, "escalation_risk", EscalationRisk.LOW)
+    """Recommends operational action based on escalation risk and intent category."""
     frustration = getattr(analysis, "frustration_level", 0)
     intent = getattr(analysis, "intent", CustomerIntent.GENERAL_INQUIRY)
+    if hasattr(intent, "value"): intent = intent.value
 
-    if risk == EscalationRisk.HIGH or frustration >= 9:
+    if frustration >= 9:
         return RecommendedAction.ESCALATE
     elif intent == CustomerIntent.COMPLAINT:
         return RecommendedAction.APOLOGIZE_AND_RESOLVE
@@ -183,8 +161,8 @@ def determine_recommended_action(analysis: Any) -> RecommendedAction:
         return RecommendedAction.CLARIFY
     elif intent == CustomerIntent.RETURN_EXCHANGE:
         return RecommendedAction.OFFER_OPTIONS
-    elif intent == CustomerIntent.REFUND:
-        return RecommendedAction.RESOLVE
+    elif intent in (CustomerIntent.REFUND, CustomerIntent.CANCELLATION):
+        return RecommendedAction.APOLOGIZE_AND_RESOLVE
     else:
         return RecommendedAction.PROVIDE_INSTRUCTIONS
 
@@ -622,15 +600,42 @@ def generate_coaching_fallback(
                 doc_ref = "Based on our documented guidelines"
             body = f"{doc_ref}: {chunk_snippets[0]} We are actively reviewing this to ensure full resolution."
 
-    # C. Closing phrase
-    if action == RecommendedAction.ESCALATE or risk == EscalationRisk.HIGH or frustration >= 9:
-        closing = "I am also escalating this case to our specialized support team to ensure you receive immediate priority resolution."
-    elif emotion in (CustomerEmotion.HAPPY, CustomerEmotion.SATISFIED) or frustration <= 1:
-        closing = "Please let me know if there is anything else I can assist you with today!"
-    else:
-        closing = "Please let me know if you have any questions, and I will be happy to help."
+    # Build dynamic, non-repetitive, context-grounded suggested response
+    emo_str = str(emotion.value if hasattr(emotion, 'value') else emotion).lower().strip()
+    intent_labels = {
+        CustomerIntent.PAYMENT_ISSUE: "your payment request",
+        CustomerIntent.REFUND: "your refund request",
+        CustomerIntent.DELIVERY_ISSUE: "your delivery status",
+        CustomerIntent.ACCOUNT_ISSUE: "your account inquiry",
+        CustomerIntent.RETURN_EXCHANGE: "your return request",
+        CustomerIntent.CANCELLATION: "your cancellation request",
+    }
+    cust_summary = intent_labels.get(intent, "your inquiry")
 
-    suggested_response = f"{opening} {body} {closing}"
+    if chunks and not no_relevant_info:
+        top_chunk = chunks[0]
+        snippet = str(top_chunk.get("content") or top_chunk.get("text") or "").strip()
+        doc_title = str(top_chunk.get("title") or top_chunk.get("source") or "our policy guidelines").strip()
+        if len(snippet) > 140:
+            snippet = snippet[:137] + "..."
+        knowledge_clause = f"According to {doc_title}, '{snippet}'."
+    else:
+        knowledge_clause = "I am currently checking our verified knowledge base to provide full details for your account."
+
+    if action == RecommendedAction.ESCALATE or frustration >= 9:
+        opening = f"I sincerely apologize for the ongoing frustration regarding {cust_summary}."
+        closing = "I am transferring your case immediately to a senior supervisor to take over and resolve this without further delay."
+    elif emo_str == "angry" or frustration >= 7:
+        opening = f"I sincerely apologize for the frustration regarding {cust_summary}."
+        closing = "I am prioritizing your request right now to ensure an immediate resolution."
+    elif emo_str in ("frustrated", "worried") or frustration >= 5:
+        opening = f"I completely understand your concern regarding {cust_summary}."
+        closing = "Let me assist you directly with this so we can get it sorted out."
+    else:
+        opening = f"Thank you for reaching out regarding {cust_summary}."
+        closing = "Please let me know if you have any questions and I will be happy to assist."
+
+    suggested_response = f"{opening} {knowledge_clause} {closing}"
 
     # 2. Coaching Tips (2-4 actionable bulleted tips)
     tips: List[str] = []
@@ -766,11 +771,11 @@ def calculate_escalation_monitor(
         
     score = max(0.0, min(100.0, score))
     
-    if score < 40:
+    if score < 35:
         level = EscalationRiskLevel.LOW
-    elif score < 70:
+    elif score < 50:
         level = EscalationRiskLevel.MEDIUM
-    elif score < 90:
+    elif score < 85:
         level = EscalationRiskLevel.HIGH
     else:
         level = EscalationRiskLevel.CRITICAL

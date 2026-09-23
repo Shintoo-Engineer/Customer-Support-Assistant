@@ -4,7 +4,7 @@ import re
 
 from app.services.rag_service import generate_with_gemini
 from app.services.persona_service import get_persona_brief, PERSONAS
-from app.services.scenario_service import get_scenario_brief
+from app.services.scenario_service import get_scenario_brief, SCENARIOS
 from app.services.simulator_state import (
     initial_state,
     update_state,
@@ -203,7 +203,9 @@ def _generate_contextual_customer_fallback(
         "policy does not allow", "against our policy", "refuse", "cannot refund",
         "unable to help", "too bad", "no exception", "not eligible", "can't assist",
         "cannot assist", "no refund", "non-negotiable", "never be issued", "will not refund",
-        "won't refund", "strictly non-negotiable"
+        "won't refund", "strictly non-negotiable", "contact your bank", "call your bank",
+        "check with your bank", "contact bank", "no error", "no issue", "on our end",
+        "on our side", "your bank", "bank's fault", "try again later", "try again tomorrow"
     ])
 
     candidates = []
@@ -415,3 +417,43 @@ def generate_customer_turn(
         "is_resolved": is_resolved(updated_state),
         "is_escalated": is_escalated(updated_state),
     }
+
+
+def generate_initial_customer_message(
+    persona: str,
+    scenario: str,
+    initial_emotion: str = "frustrated",
+    issue_severity: int = 3,
+    patience_level: int = 3,
+) -> str:
+    """Generates dynamic opening customer complaint message based on persona, scenario, and emotion."""
+    persona_brief = get_persona_brief(persona)
+    scenario_brief = get_scenario_brief(scenario)
+    
+    prompt = f"""You are simulating a customer starting a new customer support interaction.
+
+=== CUSTOMER PROFILE ===
+{persona_brief}
+Emotional State: {initial_emotion.upper()}
+Issue Severity: {issue_severity}/5
+Patience Level: {patience_level}/5
+
+=== SCENARIO DETAILS ===
+{scenario_brief}
+
+=== INSTRUCTIONS ===
+Write the initial opening message from the customer opening the chat or calling support.
+Express your issue according to your persona ({persona}) and initial emotion ({initial_emotion}).
+Keep it realistic, concise (2-4 sentences), and natural.
+Do NOT include any prefixes like 'Customer:' or 'Message:'. Output ONLY the raw customer text.
+"""
+    try:
+        raw_response = generate_with_gemini(prompt)
+        msg = _clean_customer_message(raw_response)
+        if msg and len(msg.strip()) > 10:
+            return msg
+    except Exception as e:
+        print(f"Failed to generate dynamic initial customer message via Gemini: {e}")
+
+    scenario_data = SCENARIOS.get(scenario, {})
+    return scenario_data.get("opening_complaint", "Hello, I am having an issue with my order and need assistance.")
