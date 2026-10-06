@@ -14,6 +14,7 @@ from app.api.manual import router as manual_router
 from app.api.user_management import router as user_management_router
 from app.api.coaching import router as coaching_router
 from app.api.escalation import router as escalation_router
+from app.api.post_interaction import router as post_interaction_router
 
 
 app = FastAPI(
@@ -55,6 +56,7 @@ app.include_router(manual_router)
 app.include_router(user_management_router)
 app.include_router(coaching_router)
 app.include_router(escalation_router)
+app.include_router(post_interaction_router)
 
 
 # --------------------------------------------------
