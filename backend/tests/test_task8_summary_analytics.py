@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.main import app
 from app.models.database import Base
 from app.models.simulator import (
     Scenario,
@@ -25,29 +26,6 @@ from app.models.simulator import (
     Message,
     SessionSummary,
 )
-from unittest.mock import MagicMock
-from app.main import app
-
-# Fixture to mock Gemini client for all tests in this module
-@pytest.fixture(autouse=True)
-def mock_gemini_client(monkeypatch):
-    """Replace rag_service.client with a dummy that returns a fixed response."""
-    import app.services.rag_service as rag_service
-    # Dummy response object with .text attribute
-    class DummyResponse:
-        def __init__(self, text):
-            self.text = text
-    # Dummy model with generate_content method
-    class DummyModel:
-        def generate_content(self, model, contents):
-            # Return a deterministic answer for any prompt
-            return DummyResponse(text="Mocked Gemini answer.")
-    dummy_client = MagicMock()
-    dummy_client.models = DummyModel()
-    monkeypatch.setattr(rag_service, "client", dummy_client)
-    # Ensure the function uses the mocked client
-    yield
-
 from app.services.summary_service import (
     calculate_resolution_quality_score,
     calculate_empathy_and_communication_scores,

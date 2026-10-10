@@ -3,10 +3,7 @@ import time
 import re
 
 from dotenv import load_dotenv
-try:
-    import google.generativeai as genai
-except ImportError:
-    genai = None
+from google import genai
 
 from app.services.embedding_service import generate_embedding
 from app.services.vector_service import search_documents
@@ -28,17 +25,14 @@ load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
 
-# Initialize Gemini client safely; allow missing API key for test environments
-if api_key and genai:
-    genai.configure(api_key=api_key)
-    client = None  # client will be created later per model
-else:
-    client = None  # will trigger RuntimeError later
-
-# API key is optional for test environments; no exception raised if missing
+if not api_key:
+    raise ValueError(
+        "GEMINI_API_KEY is not configured. "
+        "Please add it to the .env file."
+    )
 
 
-# client initialization handled above; removed duplicate
+client = genai.Client(api_key=api_key)
 
 
 # Primary model first, followed by independent fallbacks.
@@ -50,68 +44,92 @@ FALLBACK_MODELS = [
 ]
 
 
-def generate_with_gemini(prompt: str) -> str:
-    """Generate an answer using Gemini API with retry and fallback models.
-    Raises RuntimeError if the Gemini client is unavailable.
-    """
-    # If a client is already provided (e.g., mocked in tests), skip API key and package checks.
-    if client is None:
-        if not api_key:
-            raise RuntimeError("GEMINI_API_KEY is not configured; Gemini client unavailable.")
-        if genai is None:
-            raise RuntimeError("google.generativeai package is not installed; Gemini client unavailable.")
-        # duplicate raise removed
+# --------------------------------------------------
+# Gemini generation with retry + fallback
+# --------------------------------------------------
 
-    models_to_try = [PRIMARY_MODEL, *FALLBACK_MODELS]
+def generate_with_gemini(prompt: str):
+
+    models_to_try = [
+        PRIMARY_MODEL,
+        *FALLBACK_MODELS,
+    ]
 
     for model_index, model_name in enumerate(models_to_try):
+
         max_attempts = 2 if model_index == 0 else 1
+
         for attempt in range(max_attempts):
+
             try:
-                # Use client if available (mocked in tests) otherwise use genai
-                if client is not None:
-                    response = client.models.generate_content(model=model_name, contents=prompt)
-                else:
-                    gen_model = genai.GenerativeModel(model_name)
-                    response = gen_model.generate_content(prompt)
-                # The response object has a "text" attribute with the answer
-                response_text = getattr(response, "text", None)
+
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+
+                response_text = getattr(
+                    response,
+                    "text",
+                    None,
+                )
+
                 if response_text:
                     return response_text
-                print(f"Gemini model returned an empty response: {model_name}")
-                break
-            except Exception as exc:
-                error_message = str(exc)
+
                 print(
-                    f"Gemini model failed ({model_name}, attempt {attempt + 1}/{max_attempts}): {error_message}"
+                    f"Gemini model returned an empty response: "
+                    f"{model_name}"
                 )
+
+                break
+
+            except Exception as exc:
+
+                error_message = str(exc)
+
+                print(
+                    f"Gemini model failed "
+                    f"({model_name}, attempt "
+                    f"{attempt + 1}/{max_attempts}): "
+                    f"{error_message}"
+                )
+
                 is_temporary_error = (
                     "503" in error_message
                     or "UNAVAILABLE" in error_message
                     or "500" in error_message
                     or "INTERNAL" in error_message
                 )
+
                 is_quota_error = (
                     "429" in error_message
                     or "RESOURCE_EXHAUSTED" in error_message
                     or "quota" in error_message.lower()
                 )
-                if is_temporary_error and attempt < max_attempts - 1:
+
+                if (
+                    is_temporary_error
+                    and attempt < max_attempts - 1
+                ):
                     time.sleep(3)
                     continue
+
                 if is_quota_error:
-                    print(f"Quota/rate limit reached for {model_name}. Trying the next Gemini model.")
+                    print(
+                        f"Quota/rate limit reached for "
+                        f"{model_name}. "
+                        f"Trying the next Gemini model."
+                    )
+
                 break
+
+
     raise RuntimeError(
-        "All configured Gemini models failed. Please check Gemini API quota, billing, model availability, and API configuration."
+        "All configured Gemini models failed. "
+        "Please check Gemini API quota, billing, "
+        "model availability, and API configuration."
     )
-
-
-# --------------------------------------------------
-# Gemini generation with retry + fallback
-# --------------------------------------------------
-
-
 
 
 # --------------------------------------------------
@@ -170,27 +188,43 @@ def get_latest_active_document_ids():
     """
 
     db = SessionLocal()
+
     try:
+
         documents = (
             db.query(Document)
             .filter(Document.status == "active")
             .all()
         )
+
         latest_documents = {}
+
         for document in documents:
-            normalized_name = normalize_document_name(document.document_name)
+
+            normalized_name = normalize_document_name(
+                document.document_name
+            )
+
             if not normalized_name:
                 continue
-            current_document = latest_documents.get(normalized_name)
-            if current_document is None or document.version > current_document.version:
+
+            current_document = latest_documents.get(
+                normalized_name
+            )
+
+            if (
+                current_document is None
+                or document.version > current_document.version
+            ):
                 latest_documents[normalized_name] = document
-        return {document.id for document in latest_documents.values()}
-    except Exception as e:
-        # If the documents table does not exist or any DB error occurs, log and return empty set
-        import logging
-        logging.getLogger(__name__).warning("Failed to retrieve active document IDs: %s", e)
-        return set()
+
+        return {
+            document.id
+            for document in latest_documents.values()
+        }
+
     finally:
+
         db.close()
 
 

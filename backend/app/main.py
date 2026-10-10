@@ -22,24 +22,8 @@ app = FastAPI(
     description="Customer Support Assistant API",
     version="1.0.0",
 )
-# --------------------------------------------------
-# Initialize database tables
-# --------------------------------------------------
-from app.models import simulator
-from app.models.database import Base, engine
 
 
-
-# --------------------------------------------------
-# Initialize database tables (run on FastAPI startup)
-# --------------------------------------------------
-@app.on_event("startup")
-async def init_db() -> None:
-    """Create all tables when the FastAPI app starts (production)."""
-    Base.metadata.create_all(bind=engine)
-
-# --------------------------------------------------
-# CORS Configuration
 # --------------------------------------------------
 # CORS Configuration
 # --------------------------------------------------

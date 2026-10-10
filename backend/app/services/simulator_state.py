@@ -233,7 +233,7 @@ def update_state(current_state: dict, agent_response: str, persona: str) -> dict
 
 def is_resolved(state: dict) -> bool:
     """Returns True if the customer state satisfies the resolution condition."""
-    return state.get("satisfaction", 0) >= 75 and state.get("frustration", 100) <= 25 and state.get("escalation_intent", 0) < 85
+    return state.get("satisfaction", 0) >= 75 and state.get("frustration", 100) <= 25
 
 
 def is_escalated(state: dict) -> bool:

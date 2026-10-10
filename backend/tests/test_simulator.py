@@ -4,7 +4,6 @@ import os
 import sys
 from unittest.mock import MagicMock
 import pytest
-from unittest.mock import patch
 
 # Ensure GEMINI_API_KEY is configured so imports succeed without real credentials
 os.environ.setdefault("GEMINI_API_KEY", "mock_key_for_testing")
@@ -23,7 +22,6 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.models.database import Base
-from app.models.document import Document
 from app.models.simulator import Scenario, Session, Conversation, Message
 from app.api.simulator import get_db
 from app.services.persona_service import get_persona_brief, PERSONAS
@@ -57,12 +55,6 @@ TestingSessionLocal = sessionmaker(
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_test_db():
-    # Patch the rag_service and knowledge_recommendation_service functions to avoid DB query for documents
-    from unittest.mock import patch
-    patcher_rag = patch('app.services.rag_service.get_latest_active_document_ids', return_value=[])
-    patcher_kr = patch('app.services.knowledge_recommendation_service.get_latest_active_document_ids', return_value=[])
-    patcher_rag.start()
-    patcher_kr.start()
     """Sets up an isolated SQLite test database and overrides FastAPI dependency."""
     if os.path.exists(TEST_DB_FILE):
         try:
@@ -83,9 +75,6 @@ def setup_test_db():
     app.dependency_overrides[get_db] = override_get_db
 
     yield
-    # Stop the patches after tests
-    patcher_rag.stop()
-    patcher_kr.stop()
 
     app.dependency_overrides.clear()
     test_engine.dispose()

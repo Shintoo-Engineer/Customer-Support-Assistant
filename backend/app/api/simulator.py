@@ -27,9 +27,6 @@ from app.services.knowledge_recommendation_service import (
 from app.services.escalation_service import (
     calculate_escalation_risk,
 )
-from app.services.post_interaction_summary_service import (
-    build_post_interaction_summary,
-)
 
 
 router = APIRouter(
@@ -72,6 +69,16 @@ class SimulatorMessageRequest(BaseModel):
 
 # ============================================================
 # TASK 6 HELPER
+#
+# Task 4 provides:
+#   - frustration_level
+#   - sentiment
+#
+# Task 6 uses those values plus:
+#   - current customer message
+#   - conversation history
+#
+# Task 6 remains the single source of truth for escalation.
 # ============================================================
 
 def _build_escalation_result(
@@ -106,6 +113,10 @@ def start_simulator_session(
     request: SimulatorStartRequest,
     db: DBSession = Depends(get_db),
 ):
+    # --------------------------------------------------------
+    # Validate scenario
+    # --------------------------------------------------------
+
     try:
         get_scenario_brief(request.scenario)
 
@@ -114,6 +125,11 @@ def start_simulator_session(
             status_code=400,
             detail=str(exc),
         )
+
+
+    # --------------------------------------------------------
+    # Validate persona
+    # --------------------------------------------------------
 
     try:
         get_persona_brief(request.persona)
@@ -124,6 +140,7 @@ def start_simulator_session(
             detail=str(exc),
         )
 
+
     scenario_key = request.scenario.strip().lower()
 
     if scenario_key not in SCENARIOS:
@@ -133,6 +150,11 @@ def start_simulator_session(
         )
 
     scenario_data = SCENARIOS[scenario_key]
+
+
+    # ========================================================
+    # CREATE SCENARIO
+    # ========================================================
 
     scenario_row = Scenario(
         title=(
@@ -156,6 +178,11 @@ def start_simulator_session(
     db.add(scenario_row)
     db.flush()
 
+
+    # ========================================================
+    # CREATE SESSION
+    # ========================================================
+
     session_row = Session(
         scenario_id=scenario_row.scenario_id,
         start_time=datetime.utcnow(),
@@ -165,6 +192,11 @@ def start_simulator_session(
     db.add(session_row)
     db.flush()
 
+
+    # ========================================================
+    # INITIAL SIMULATOR STATE
+    # ========================================================
+
     start_state = initial_state(
         persona=request.persona,
         initial_emotion=request.initial_emotion,
@@ -172,14 +204,27 @@ def start_simulator_session(
         patience_level=request.patience_level,
     )
 
+
     opening_message = scenario_data[
         "opening_complaint"
     ]
+
+
+    # ========================================================
+    # TASK 4 - ANALYSIS
+    #
+    # ONLY Task 4 analysis fields live here.
+    # ========================================================
 
     opening_analysis = analyze_customer_message(
         message=opening_message,
         conversation_history=[],
     )
+
+
+    # ========================================================
+    # TASK 5 - KNOWLEDGE RECOMMENDATION
+    # ========================================================
 
     opening_knowledge = recommend_knowledge(
         message=opening_message,
@@ -201,11 +246,28 @@ def start_simulator_session(
         "",
     )
 
+
+    # ========================================================
+    # TASK 6 - ESCALATION
+    #
+    # IMPORTANT:
+    # Task 6 receives Task 4 frustration/sentiment.
+    # It does NOT write its values into Task 4 analysis.
+    # ========================================================
+
     opening_escalation = _build_escalation_result(
         message=opening_message,
         analysis=opening_analysis,
         conversation_history=[],
     )
+
+
+    # ========================================================
+    # CREATE CONVERSATION
+    #
+    # Database stores Task 6 risk level as the conversation's
+    # escalation status.
+    # ========================================================
 
     conversation_row = Conversation(
         session_id=session_row.session_id,
@@ -230,6 +292,11 @@ def start_simulator_session(
     db.add(conversation_row)
     db.flush()
 
+
+    # ========================================================
+    # CUSTOMER OPENING MESSAGE
+    # ========================================================
+
     customer_msg = Message(
         conversation_id=conversation_row.conversation_id,
         sender_type="Customer",
@@ -239,6 +306,11 @@ def start_simulator_session(
     )
 
     db.add(customer_msg)
+
+
+    # ========================================================
+    # SYSTEM STATE MESSAGE
+    # ========================================================
 
     system_state_msg = Message(
         conversation_id=conversation_row.conversation_id,
@@ -257,6 +329,14 @@ def start_simulator_session(
     db.add(system_state_msg)
 
     db.commit()
+
+
+    # ========================================================
+    # RETURN
+    #
+    # analysis = Task 4 + Task 5
+    # escalation = Task 6
+    # ========================================================
 
     return {
         "session_id": session_row.session_id,
@@ -286,6 +366,10 @@ def send_simulator_message(
     request: SimulatorMessageRequest,
     db: DBSession = Depends(get_db),
 ):
+    # ========================================================
+    # LOOKUP SESSION
+    # ========================================================
+
     session_row = (
         db.query(Session)
         .filter(
@@ -300,6 +384,11 @@ def send_simulator_message(
             status_code=404,
             detail="Simulator session not found",
         )
+
+
+    # ========================================================
+    # LOOKUP CONVERSATION
+    # ========================================================
 
     conversation_row = (
         db.query(Conversation)
@@ -316,6 +405,11 @@ def send_simulator_message(
             detail="Conversation not found for session",
         )
 
+
+    # ========================================================
+    # LOOKUP SCENARIO
+    # ========================================================
+
     scenario_row = (
         db.query(Scenario)
         .filter(
@@ -324,6 +418,11 @@ def send_simulator_message(
         )
         .first()
     )
+
+
+    # ========================================================
+    # FETCH ORDERED MESSAGES
+    # ========================================================
 
     all_messages = (
         db.query(Message)
@@ -336,6 +435,11 @@ def send_simulator_message(
         )
         .all()
     )
+
+
+    # ========================================================
+    # RECONSTRUCT CURRENT SIMULATOR STATE
+    # ========================================================
 
     current_state = None
     persona = "calm"
@@ -375,6 +479,7 @@ def send_simulator_message(
         except Exception:
             continue
 
+
     if not current_state:
 
         current_state = initial_state(
@@ -384,6 +489,13 @@ def send_simulator_message(
             3,
         )
 
+
+    # ========================================================
+    # DIALOGUE HISTORY
+    #
+    # This contains only actual customer/agent conversation.
+    # ========================================================
+
     dialogue_history = [
         {
             "sender_type": message.sender_type,
@@ -392,6 +504,11 @@ def send_simulator_message(
         for message in all_messages
         if message.message_type != "System"
     ]
+
+
+    # ========================================================
+    # SAVE SUPPORT AGENT RESPONSE
+    # ========================================================
 
     agent_msg = Message(
         conversation_id=conversation_row.conversation_id,
@@ -404,6 +521,11 @@ def send_simulator_message(
     db.add(agent_msg)
     db.flush()
 
+
+    # ========================================================
+    # GENERATE NEXT CUSTOMER TURN
+    # ========================================================
+
     turn_result = generate_customer_turn(
         persona=persona,
         scenario=scenario_key,
@@ -411,6 +533,7 @@ def send_simulator_message(
         conversation_history=dialogue_history,
         agent_response=request.agent_response,
     )
+
 
     customer_message = turn_result[
         "customer_message"
@@ -428,10 +551,22 @@ def send_simulator_message(
         "is_escalated"
     ]
 
+
+    # ========================================================
+    # TASK 4 - ANALYSIS
+    #
+    # Task 4 remains independent.
+    # ========================================================
+
     customer_analysis = analyze_customer_message(
         message=customer_message,
         conversation_history=dialogue_history,
     )
+
+
+    # ========================================================
+    # TASK 5 - KNOWLEDGE RECOMMENDATION
+    # ========================================================
 
     knowledge_result = recommend_knowledge(
         message=customer_message,
@@ -453,11 +588,24 @@ def send_simulator_message(
         "",
     )
 
+
+    # ========================================================
+    # TASK 6 - ESCALATION
+    #
+    # Task 6 receives Task 4's frustration and sentiment.
+    # It produces the authoritative escalation result.
+    # ========================================================
+
     escalation_result = _build_escalation_result(
         message=customer_message,
         analysis=customer_analysis,
         conversation_history=dialogue_history,
     )
+
+
+    # ========================================================
+    # SAVE CUSTOMER MESSAGE
+    # ========================================================
 
     customer_msg_row = Message(
         conversation_id=conversation_row.conversation_id,
@@ -468,6 +616,11 @@ def send_simulator_message(
     )
 
     db.add(customer_msg_row)
+
+
+    # ========================================================
+    # SAVE UPDATED SIMULATOR STATE
+    # ========================================================
 
     system_state_row = Message(
         conversation_id=conversation_row.conversation_id,
@@ -485,6 +638,18 @@ def send_simulator_message(
 
     db.add(system_state_row)
 
+
+    # ========================================================
+    # SYNCHRONIZE CONVERSATION
+    #
+    # Task 4 fields:
+    #   intent
+    #   sentiment
+    #
+    # Task 6:
+    #   escalation_risk
+    # ========================================================
+
     conversation_row.intent = customer_analysis[
         "intent"
     ]
@@ -498,6 +663,13 @@ def send_simulator_message(
             "risk_level"
         ]
     )
+
+
+    # ========================================================
+    # RESOLUTION / SIMULATOR ESCALATION STATE
+    #
+    # This is separate from Task 6 risk level.
+    # ========================================================
 
     if is_resolved:
 
@@ -519,6 +691,11 @@ def send_simulator_message(
             "Escalated"
         )
 
+
+    # ========================================================
+    # CUSTOMER TURN COUNT
+    # ========================================================
+
     customer_turns = (
         sum(
             1
@@ -531,7 +708,16 @@ def send_simulator_message(
         + 1
     )
 
+
     db.commit()
+
+
+    # ========================================================
+    # RETURN
+    #
+    # analysis   -> Task 4 + Task 5
+    # escalation -> Task 6
+    # ========================================================
 
     return {
         "session_id": session_row.session_id,
@@ -561,6 +747,10 @@ def get_simulator_history(
     session_id: int,
     db: DBSession = Depends(get_db),
 ):
+    # ========================================================
+    # LOOKUP SESSION
+    # ========================================================
+
     session_row = (
         db.query(Session)
         .filter(
@@ -575,6 +765,11 @@ def get_simulator_history(
             status_code=404,
             detail="Simulator session not found",
         )
+
+
+    # ========================================================
+    # LOOKUP CONVERSATION
+    # ========================================================
 
     conversation_row = (
         db.query(Conversation)
@@ -593,6 +788,11 @@ def get_simulator_history(
             "messages": [],
         }
 
+
+    # ========================================================
+    # RETRIEVE DIALOGUE MESSAGES
+    # ========================================================
+
     messages = (
         db.query(Message)
         .filter(
@@ -606,6 +806,11 @@ def get_simulator_history(
         )
         .all()
     )
+
+
+    # ========================================================
+    # HISTORY RESPONSE
+    # ========================================================
 
     return {
         "session_id": session_id,
@@ -626,203 +831,4 @@ def get_simulator_history(
             }
             for message in messages
         ],
-    }
-
-
-# ============================================================
-# TASK 8 - POST-INTERACTION PERFORMANCE SUMMARY
-# ============================================================
-
-@router.get("/{session_id}/post-interaction-summary")
-def get_post_interaction_summary(
-    session_id: int,
-    db: DBSession = Depends(get_db),
-):
-    # --------------------------------------------------------
-    # LOOKUP SESSION
-    # --------------------------------------------------------
-
-    session_row = (
-        db.query(Session)
-        .filter(
-            Session.session_id
-            == session_id
-        )
-        .first()
-    )
-
-    if not session_row:
-        raise HTTPException(
-            status_code=404,
-            detail="Simulator session not found",
-        )
-
-    # --------------------------------------------------------
-    # LOOKUP CONVERSATION
-    # --------------------------------------------------------
-
-    conversation_row = (
-        db.query(Conversation)
-        .filter(
-            Conversation.session_id
-            == session_id
-        )
-        .first()
-    )
-
-    if not conversation_row:
-        raise HTTPException(
-            status_code=404,
-            detail="Conversation not found for session",
-        )
-
-    # --------------------------------------------------------
-    # FETCH ACTUAL CONVERSATION MESSAGES
-    #
-    # System messages are excluded because they contain
-    # simulator state rather than customer-agent interaction.
-    # --------------------------------------------------------
-
-    messages = (
-        db.query(Message)
-        .filter(
-            Message.conversation_id
-            == conversation_row.conversation_id,
-            Message.message_type
-            != "System",
-        )
-        .order_by(
-            Message.message_id.asc()
-        )
-        .all()
-    )
-
-    conversation_history = [
-        {
-            "sender_type": message.sender_type,
-            "message_text": message.message_text,
-        }
-        for message in messages
-    ]
-
-    # --------------------------------------------------------
-    # DERIVE LATEST CUSTOMER ANALYSIS
-    #
-    # Task 8 uses the existing Task 4 analysis service.
-    # No Task 4 code is changed.
-    # --------------------------------------------------------
-
-    customer_messages = [
-        message
-        for message in messages
-        if str(
-            message.sender_type
-        ).strip().lower()
-        in {
-            "customer",
-            "ai_customer",
-            "user",
-        }
-    ]
-
-    latest_customer_message = (
-        customer_messages[-1].message_text
-        if customer_messages
-        else ""
-    )
-
-    latest_analysis = {}
-
-    if latest_customer_message:
-        latest_analysis = analyze_customer_message(
-            message=latest_customer_message,
-            conversation_history=conversation_history,
-        )
-
-    # --------------------------------------------------------
-    # TASK 8 INPUTS
-    # --------------------------------------------------------
-
-    intent = (
-        conversation_row.intent
-        or latest_analysis.get(
-            "intent",
-            "general_inquiry",
-        )
-    )
-
-    sentiment = (
-        conversation_row.sentiment
-        or latest_analysis.get(
-            "sentiment",
-            "Neutral",
-        )
-    )
-
-    emotion = latest_analysis.get(
-        "emotion",
-        "neutral",
-    )
-
-    frustration_level = latest_analysis.get(
-        "frustration_level",
-        0,
-    )
-
-    satisfaction_trend = latest_analysis.get(
-        "satisfaction_trend",
-        "Stable",
-    )
-
-    escalation_risk = (
-        conversation_row.escalation_risk
-        or "Low"
-    )
-
-    resolution_status = (
-        conversation_row.resolution_status
-        or "Unresolved"
-    )
-
-    session_status = (
-        session_row.status
-        or "In Progress"
-    )
-
-    is_resolved = (
-        resolution_status
-        == "Resolved"
-    )
-
-    is_escalated = (
-        resolution_status
-        == "Escalated"
-    )
-
-    # --------------------------------------------------------
-    # BUILD TASK 8 SUMMARY
-    # --------------------------------------------------------
-
-    summary = build_post_interaction_summary(
-        conversation_history=conversation_history,
-        intent=intent,
-        sentiment=sentiment,
-        emotion=emotion,
-        frustration_level=frustration_level,
-        satisfaction_trend=satisfaction_trend,
-        escalation_risk=escalation_risk,
-        resolution_status=resolution_status,
-        session_status=session_status,
-        is_resolved=is_resolved,
-        is_escalated=is_escalated,
-    )
-
-    # --------------------------------------------------------
-    # RETURN TASK 8 RESPONSE
-    # --------------------------------------------------------
-
-    return {
-        "session_id": session_id,
-        "status": session_row.status,
-        "summary": summary,
     }
